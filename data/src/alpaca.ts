@@ -47,12 +47,47 @@ export type AlpacaClock = {
   next_close: string;
 };
 
+export type AlpacaPortfolioHistory = {
+  timestamp: number[]; // unix seconds
+  equity: (number | null)[];
+  base_value: number;
+  timeframe: string;
+};
+
 export const alpaca = {
   account: () => get<AlpacaAccount>("/v2/account"),
   positions: () => get<AlpacaPosition[]>("/v2/positions"),
-  filledOrders: (since: Date) =>
-    get<AlpacaOrder[]>(
-      `/v2/orders?status=filled&after=${since.toISOString()}&direction=desc&limit=500`,
-    ),
+  // Filled orders since `since`. Paginates by `until` cursor when results
+  // hit the per-page limit (500). Caller is responsible for setting `since`
+  // back as far as needed; defaults to no filter (all account history) when
+  // omitted.
+  filledOrders: async (since?: Date): Promise<AlpacaOrder[]> => {
+    const out: AlpacaOrder[] = [];
+    let until: string | undefined;
+    while (true) {
+      const params = new URLSearchParams({
+        status: "filled",
+        direction: "desc",
+        limit: "500",
+      });
+      if (since) params.set("after", since.toISOString());
+      if (until) params.set("until", until);
+      const page = await get<AlpacaOrder[]>(`/v2/orders?${params.toString()}`);
+      out.push(...page);
+      if (page.length < 500) break;
+      // Page back further: the next page should end strictly before the
+      // oldest filled_at we already have.
+      const oldest = page[page.length - 1]?.filled_at;
+      if (!oldest) break;
+      until = oldest;
+    }
+    return out;
+  },
   clock: () => get<AlpacaClock>("/v2/clock"),
+  // Pulls historical portfolio equity. period accepts e.g. '1A', '5A', 'all'
+  // (Alpaca silently caps 'all' at ~5 years of daily data anyway).
+  portfolioHistory: (period = "5A", timeframe = "1D") =>
+    get<AlpacaPortfolioHistory>(
+      `/v2/account/portfolio/history?period=${period}&timeframe=${timeframe}`,
+    ),
 };

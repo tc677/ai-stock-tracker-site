@@ -1,6 +1,6 @@
 import { alpaca } from "./alpaca.js";
 import { db } from "./db.js";
-import { getQuote, getYtdReturnPct } from "./market.js";
+import { getDailyBars, getQuote, getYtdReturnPct } from "./market.js";
 // Bundled as a string via esbuild's text loader at build time.
 import schemaSql from "./schema.sql";
 
@@ -9,17 +9,24 @@ export const handler = async () => {
   try {
     await ensureSchema();
 
-    // Skip pulling when the market is closed (weekends, holidays, off-hours).
-    // The EventBridge cron filters most of these out, but this catches
-    // holidays and the small UTC-vs-DST mismatch on the schedule window.
-    // FORCE_PULL=1 bypasses the check (useful for manual runs).
+    // One-time backfill of historical data from Alpaca. Runs only if the
+    // puller_meta marker isn't set. Independent of market hours - the
+    // history data is useful regardless of whether the market is open now.
+    await maybeBackfill();
+
+    // Skip the live-pull part when the market is closed (weekends,
+    // holidays, off-hours). FORCE_PULL=1 bypasses for manual runs.
     if (!process.env.FORCE_PULL) {
       const clock = await alpaca.clock();
       if (!clock.is_open) {
         console.log(
-          `market closed, skipping. next open: ${clock.next_open}`,
+          `market closed, skipping live pull. next open: ${clock.next_open}`,
         );
-        return { ok: true, skipped: "market_closed", ms: Date.now() - startedAt };
+        return {
+          ok: true,
+          skipped: "market_closed",
+          ms: Date.now() - startedAt,
+        };
       }
     }
 
@@ -34,8 +41,101 @@ export const handler = async () => {
 };
 
 async function ensureSchema() {
-  // Idempotent - schema.sql uses CREATE TABLE IF NOT EXISTS.
   await db.query(schemaSql);
+}
+
+async function getMeta(key: string): Promise<string | null> {
+  const { rows } = await db.query<{ value: string }>(
+    `SELECT value FROM puller_meta WHERE key = $1`,
+    [key],
+  );
+  return rows[0]?.value ?? null;
+}
+
+async function setMeta(key: string, value: string) {
+  await db.query(
+    `INSERT INTO puller_meta (key, value, updated_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+    [key, value],
+  );
+}
+
+async function maybeBackfill() {
+  // History backfill (portfolio equity + benchmark bars) - one-time.
+  if (!(await getMeta("backfilled_history"))) {
+    console.log("starting history backfill from Alpaca...");
+    const history = await alpaca.portfolioHistory("5A", "1D");
+    let portfolioRows = 0;
+    for (let i = 0; i < history.timestamp.length; i++) {
+      const equity = history.equity[i];
+      if (equity == null) continue;
+      const date = new Date(history.timestamp[i] * 1000)
+        .toISOString()
+        .slice(0, 10);
+      await db.query(
+        `INSERT INTO performance_daily (date, symbol, value)
+         VALUES ($1, 'PORTFOLIO', $2)
+         ON CONFLICT (date, symbol) DO UPDATE SET value = EXCLUDED.value`,
+        [date, equity],
+      );
+      portfolioRows++;
+    }
+
+    const benchmarkSymbols = await getBenchmarkSymbols();
+    const firstTs =
+      history.timestamp[0] ?? Date.now() / 1000 - 5 * 365 * 24 * 60 * 60;
+    const start = new Date(firstTs * 1000).toISOString();
+    let benchmarkRows = 0;
+    for (const symbol of benchmarkSymbols) {
+      const bars = await getDailyBars(symbol, start);
+      for (const b of bars) {
+        await db.query(
+          `INSERT INTO performance_daily (date, symbol, value)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (date, symbol) DO UPDATE SET value = EXCLUDED.value`,
+          [b.date, symbol, b.close],
+        );
+        benchmarkRows++;
+      }
+    }
+    await setMeta("backfilled_history", new Date().toISOString());
+    console.log(
+      `history backfill complete: ${portfolioRows} portfolio rows, ${benchmarkRows} benchmark rows`,
+    );
+  }
+
+  // Orders backfill - separate marker so it runs even if the history
+  // backfill already completed on a prior deploy.
+  if (!(await getMeta("backfilled_orders"))) {
+    console.log("starting orders backfill from Alpaca...");
+    const allOrders = await alpaca.filledOrders();
+    const orderRows = await insertOrders(allOrders);
+    await setMeta("backfilled_orders", new Date().toISOString());
+    console.log(`orders backfill complete: ${orderRows} order rows inserted`);
+  }
+}
+
+async function insertOrders(orders: { id: string; symbol: string; side: "buy" | "sell"; filled_qty: string; filled_avg_price: string | null; filled_at: string | null }[]): Promise<number> {
+  let inserted = 0;
+  for (const o of orders) {
+    if (!o.filled_at || !o.filled_avg_price) continue;
+    const r = await db.query(
+      `INSERT INTO activity (id, symbol, side, qty, price, filled_at)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (id) DO NOTHING`,
+      [
+        o.id,
+        o.symbol,
+        o.side,
+        Number(o.filled_qty),
+        Number(o.filled_avg_price),
+        o.filled_at,
+      ],
+    );
+    if (r.rowCount && r.rowCount > 0) inserted++;
+  }
+  return inserted;
 }
 
 async function pull() {
@@ -50,9 +150,8 @@ async function pull() {
   const portfolioValue = Number(account.portfolio_value);
   const equity = Number(account.equity);
 
-  // Alpaca's `last_equity` is yesterday's close, not the year start. Use a
-  // configured starting balance instead, so the dashboard shows return
-  // since account inception.
+  // YTD vs configured starting equity. Alpaca's `last_equity` is yesterday's
+  // close, not the year start, so we use STARTING_EQUITY instead.
   const startingEquity = Number(process.env.STARTING_EQUITY ?? "10000");
   const ytdReturnDollar = equity - startingEquity;
   const ytdReturnPct = startingEquity
@@ -87,9 +186,15 @@ async function pull() {
            (symbol, qty, avg_entry_price, current_price,
             market_value, unrealized_pl, unrealized_pl_pct, opened_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
-        [p.symbol, Number(p.qty), Number(p.avg_entry_price),
-         Number(p.current_price), Number(p.market_value),
-         Number(p.unrealized_pl), Number(p.unrealized_plpc) * 100],
+        [
+          p.symbol,
+          Number(p.qty),
+          Number(p.avg_entry_price),
+          Number(p.current_price),
+          Number(p.market_value),
+          Number(p.unrealized_pl),
+          Number(p.unrealized_plpc) * 100,
+        ],
       );
     }
     await db.query("COMMIT");
@@ -98,27 +203,32 @@ async function pull() {
     throw e;
   }
 
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // 90-day rolling window for routine runs. The one-time backfill below
+  // pulls the rest of history; this window covers anything the backfill
+  // missed (e.g. a brief Alpaca outage at backfill time).
+  const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
   const orders = await alpaca.filledOrders(since);
-  for (const o of orders) {
-    if (!o.filled_at || !o.filled_avg_price) continue;
-    await db.query(
-      `INSERT INTO activity (id, symbol, side, qty, price, filled_at)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (id) DO NOTHING`,
-      [o.id, o.symbol, o.side, Number(o.filled_qty),
-       Number(o.filled_avg_price), o.filled_at],
-    );
+  const newOrderRows = await insertOrders(orders);
+  const skipped = orders.length - orders.filter((o) => o.filled_at && o.filled_avg_price).length;
+  if (skipped > 0) {
+    console.log(`note: skipped ${skipped} order(s) missing filled_at or filled_avg_price`);
   }
 
-  const today = new Date().toISOString().slice(0, 10);
-  await upsertDailyValue(today, "PORTFOLIO", portfolioValue);
-  for (const b of benchmarks) {
-    await upsertDailyValue(today, b.symbol, b.price);
-  }
+  // Both write-paths in parallel: daily (one row per day, upserted) +
+  // intraday (one row per minute, append-only).
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  await Promise.all([
+    upsertDailyValue(today, "PORTFOLIO", portfolioValue),
+    insertIntradayValue(now, "PORTFOLIO", portfolioValue),
+    ...benchmarks.flatMap((b) => [
+      upsertDailyValue(today, b.symbol, b.price),
+      insertIntradayValue(now, b.symbol, b.price),
+    ]),
+  ]);
 
   console.log(
-    `puller ok: ${positions.length} positions, ${orders.length} recent orders, ${benchmarks.length} benchmarks`,
+    `puller ok: ${positions.length} positions, ${orders.length} orders fetched (${newOrderRows} new), ${benchmarks.length} benchmarks`,
   );
 }
 
@@ -147,6 +257,15 @@ async function upsertDailyValue(date: string, symbol: string, value: number) {
      VALUES ($1, $2, $3)
      ON CONFLICT (date, symbol) DO UPDATE SET value = EXCLUDED.value`,
     [date, symbol, value],
+  );
+}
+
+async function insertIntradayValue(ts: Date, symbol: string, value: number) {
+  await db.query(
+    `INSERT INTO performance_intraday (ts, symbol, value)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (ts, symbol) DO NOTHING`,
+    [ts, symbol, value],
   );
 }
 

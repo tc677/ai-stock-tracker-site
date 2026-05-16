@@ -50,22 +50,38 @@ export async function getActivity(limit = 50): Promise<Activity[]> {
   return rows;
 }
 
-export async function getPerformanceSeries(): Promise<PerformanceSeries[]> {
+import { isIntraday, rangeSinceClause, type Range } from "./ranges";
+
+export async function getPerformanceSeries(
+  range: Range = "YTD",
+): Promise<PerformanceSeries[]> {
+  const intraday = isIntraday(range);
+  const since = rangeSinceClause(range);
+
+  const sql = intraday
+    ? `SELECT p.symbol,
+              COALESCE(b.label, 'Portfolio') AS label,
+              p.ts::text AS t,
+              p.value
+         FROM performance_intraday p
+         LEFT JOIN benchmarks b ON b.symbol = p.symbol
+         WHERE ${since}
+         ORDER BY p.symbol, p.ts ASC`
+    : `SELECT p.symbol,
+              COALESCE(b.label, 'Portfolio') AS label,
+              p.date::text AS t,
+              p.value
+         FROM performance_daily p
+         LEFT JOIN benchmarks b ON b.symbol = p.symbol
+         WHERE ${since}
+         ORDER BY p.symbol, p.date ASC`;
+
   const { rows } = await db.query<{
     symbol: string;
     label: string;
-    date: string;
+    t: string;
     value: number;
-  }>(
-    `SELECT p.symbol,
-            COALESCE(b.label, 'Portfolio') AS label,
-            p.date,
-            p.value
-       FROM performance_daily p
-       LEFT JOIN benchmarks b ON b.symbol = p.symbol
-       WHERE p.date >= date_trunc('year', CURRENT_DATE)
-       ORDER BY p.symbol, p.date ASC`,
-  );
+  }>(sql);
 
   const bySymbol = new Map<string, PerformanceSeries>();
   for (const r of rows) {
@@ -74,7 +90,7 @@ export async function getPerformanceSeries(): Promise<PerformanceSeries[]> {
       s = { symbol: r.symbol, label: r.label, points: [] };
       bySymbol.set(r.symbol, s);
     }
-    s.points.push({ date: r.date, value: r.value });
+    s.points.push({ t: r.t, value: Number(r.value) });
   }
 
   // Portfolio first, then benchmarks alphabetically.

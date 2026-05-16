@@ -42,3 +42,24 @@ export async function getYtdReturnPct(symbol: string): Promise<number> {
   if (!first) return 0;
   return ((last - first) / first) * 100;
 }
+
+// Fetches daily closing prices for a symbol over a range. Used for backfill
+// of benchmark history. Paginates if Alpaca returns next_page_token.
+export async function getDailyBars(
+  symbol: string,
+  startISO: string,
+): Promise<{ date: string; close: number }[]> {
+  const out: { date: string; close: number }[] = [];
+  let token: string | null = null;
+  do {
+    const tokenQs: string = token ? `&page_token=${token}` : "";
+    const r: BarsResp = await get<BarsResp>(
+      `/stocks/${symbol}/bars?timeframe=1Day&start=${startISO}&limit=10000&adjustment=split${tokenQs}`,
+    );
+    for (const b of r.bars ?? []) {
+      out.push({ date: b.t.slice(0, 10), close: b.c });
+    }
+    token = r.next_page_token;
+  } while (token);
+  return out;
+}

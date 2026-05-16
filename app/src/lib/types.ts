@@ -34,8 +34,10 @@ export type Benchmark = {
   current_price: number;
 };
 
+export type PerformancePoint = { t: string; value: number };
+
 export type PerformanceSeries = {
   symbol: string;
   label: string;
-  points: { date: string; value: number }[];
+  points: PerformancePoint[];
 };

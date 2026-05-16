@@ -61,8 +61,9 @@ CREATE TABLE IF NOT EXISTS benchmark_snapshot (
   updated_at    TIMESTAMPTZ    NOT NULL DEFAULT NOW()
 );
 
--- Daily value series for charting. symbol = a benchmark symbol OR the
--- reserved string 'PORTFOLIO' for our own portfolio value.
+-- Daily value series. One row per (date, symbol). Used for long-range
+-- chart views (1M, 3M, YTD, 1Y, ALL). Backfilled from Alpaca on first
+-- puller run; upserted each puller run so today's value stays current.
 CREATE TABLE IF NOT EXISTS performance_daily (
   date    DATE NOT NULL,
   symbol  TEXT NOT NULL,
@@ -72,3 +73,24 @@ CREATE TABLE IF NOT EXISTS performance_daily (
 
 CREATE INDEX IF NOT EXISTS performance_daily_symbol_idx
   ON performance_daily (symbol, date);
+
+-- Minute-level series. One row per (timestamp, symbol). Used for the 1D
+-- chart view. Appended (not upserted) on every puller run during market
+-- hours. Older intraday data can be aged out later if it grows too large.
+CREATE TABLE IF NOT EXISTS performance_intraday (
+  ts      TIMESTAMPTZ NOT NULL,
+  symbol  TEXT        NOT NULL,
+  value   NUMERIC(18, 4) NOT NULL,
+  PRIMARY KEY (ts, symbol)
+);
+
+CREATE INDEX IF NOT EXISTS performance_intraday_symbol_ts_idx
+  ON performance_intraday (symbol, ts DESC);
+
+-- Tiny key-value table for puller state. Currently just tracks whether
+-- the one-time backfill has completed.
+CREATE TABLE IF NOT EXISTS puller_meta (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

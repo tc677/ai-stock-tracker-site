@@ -8,11 +8,13 @@ import { fmtDateTime, fmtPct, fmtUSD } from "@/lib/format";
 
 export const revalidate = 60;
 
+const DEFAULT_RANGE = "1M" as const;
+
 export default async function Home() {
   const [summary, benchmarks, series] = await Promise.all([
     getSummary().catch(() => null),
     getBenchmarks().catch(() => []),
-    getPerformanceSeries().catch(() => []),
+    getPerformanceSeries(DEFAULT_RANGE).catch(() => []),
   ]);
 
   if (!summary) {
@@ -52,7 +54,7 @@ export default async function Home() {
 
       {/* Chart */}
       <section>
-        <EquityChart series={series} />
+        <EquityChart initialRange={DEFAULT_RANGE} initialSeries={series} />
       </section>
 
       {/* Benchmark comparison */}
