@@ -34,9 +34,15 @@ async function pull() {
 
   const portfolioValue = Number(account.portfolio_value);
   const equity = Number(account.equity);
-  const lastEquity = Number(account.last_equity);
-  const ytdReturnPct = lastEquity ? ((equity - lastEquity) / lastEquity) * 100 : 0;
-  const ytdReturnDollar = equity - lastEquity;
+
+  // Alpaca's `last_equity` is yesterday's close, not the year start. Use a
+  // configured starting balance instead, so the dashboard shows return
+  // since account inception.
+  const startingEquity = Number(process.env.STARTING_EQUITY ?? "10000");
+  const ytdReturnDollar = equity - startingEquity;
+  const ytdReturnPct = startingEquity
+    ? (ytdReturnDollar / startingEquity) * 100
+    : 0;
 
   await db.query(
     `INSERT INTO account_snapshot
