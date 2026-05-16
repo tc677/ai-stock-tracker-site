@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getPositions } from "@/lib/queries";
 import { fmtDate, fmtPct, fmtUSD } from "@/lib/format";
 
-export const revalidate = 60;
+export const revalidate = 10;
 export const metadata: Metadata = { title: "Positions" };
 
 export default async function PositionsPage() {

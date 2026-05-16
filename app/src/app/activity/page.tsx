@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getActivity } from "@/lib/queries";
 import { fmtDateTime, fmtUSD } from "@/lib/format";
 
-export const revalidate = 60;
+export const revalidate = 10;
 export const metadata: Metadata = { title: "Activity" };
 
 export default async function ActivityPage() {

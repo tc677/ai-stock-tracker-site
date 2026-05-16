@@ -32,15 +32,27 @@ export function EquityChart({
   const [series, setSeries] = useState<PerformanceSeries[]>(initialSeries);
   const [loading, setLoading] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     // Skip the first fetch if we already have server-rendered data for this range.
     if (range === initialRange && series === initialSeries) return;
     let cancelled = false;
     setLoading(true);
+    setError(null);
     fetch(`/api/performance?range=${range}`)
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+        return r.json();
+      })
       .then((data: { series: PerformanceSeries[] }) => {
-        if (!cancelled) setSeries(data.series);
+        if (!cancelled) setSeries(data.series ?? []);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          console.error("chart fetch failed", e);
+          setError(e instanceof Error ? e.message : String(e));
+        }
       })
       .finally(() => !cancelled && setLoading(false));
     return () => {
@@ -55,7 +67,13 @@ export function EquityChart({
         <h2 className="text-sm font-medium text-zinc-500">Portfolio vs. benchmarks</h2>
         <RangeSelector value={range} onChange={setRange} />
       </div>
-      <Chart series={series} range={range} loading={loading} />
+      {error ? (
+        <div className="h-64 sm:h-80 flex items-center justify-center rounded-lg border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 text-sm px-4 text-center">
+          Failed to load: {error}
+        </div>
+      ) : (
+        <Chart series={series} range={range} loading={loading} />
+      )}
     </div>
   );
 }

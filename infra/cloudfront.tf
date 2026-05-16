@@ -84,8 +84,8 @@ resource "aws_cloudfront_distribution" "main" {
 
 resource "aws_cloudfront_cache_policy" "html" {
   name        = "${var.project}-html"
-  default_ttl = 60
-  max_ttl     = 60
+  default_ttl = 10
+  max_ttl     = 30
   min_ttl     = 0
 
   parameters_in_cache_key_and_forwarded_to_origin {

@@ -3,7 +3,7 @@ import { EquityChart } from "@/components/EquityChart";
 import { getPerformanceSeries } from "@/lib/queries";
 import { fmtDate, fmtPct } from "@/lib/format";
 
-export const revalidate = 60;
+export const revalidate = 10;
 export const metadata: Metadata = { title: "Performance" };
 
 export default async function PerformancePage() {

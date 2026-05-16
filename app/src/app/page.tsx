@@ -6,7 +6,7 @@ import {
 } from "@/lib/queries";
 import { fmtDateTime, fmtPct, fmtUSD } from "@/lib/format";
 
-export const revalidate = 60;
+export const revalidate = 10;
 
 const DEFAULT_RANGE = "1M" as const;
 
