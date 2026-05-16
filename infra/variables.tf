@@ -60,3 +60,9 @@ variable "starting_equity" {
   default     = 10000
   description = "Account starting balance, in USD. Used as the baseline for YTD return calculations."
 }
+
+variable "puller_schedule" {
+  type        = string
+  default     = "cron(*/5 13-21 ? * MON-FRI *)"
+  description = "EventBridge Scheduler expression for the puller. Default fires every 5 min Mon-Fri during a UTC window that covers US market hours in both EST and EDT. Use 'rate(N minutes)' for simpler always-on schedules."
+}

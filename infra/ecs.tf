@@ -248,8 +248,12 @@ resource "aws_iam_role_policy" "scheduler_run_task" {
 }
 
 resource "aws_scheduler_schedule" "puller" {
-  name                = "${var.project}-puller"
-  schedule_expression = "rate(5 minutes)"
+  name = "${var.project}-puller"
+  # Mon-Fri, every 5 min from 13:00-21:59 UTC. Covers US market hours
+  # (9:30 AM - 4:00 PM ET) in both EST and EDT. The puller also checks
+  # Alpaca's clock endpoint as a safety net for market holidays.
+  schedule_expression          = var.puller_schedule
+  schedule_expression_timezone = "UTC"
   flexible_time_window {
     mode = "OFF"
   }
