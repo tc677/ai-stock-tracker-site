@@ -2,9 +2,11 @@
 
 A little window into how my AI is doing in the market.
 
+Live at [canmyaitrade.com](https://canmyaitrade.com).
+
 It tracks the portfolio's positions, recent trades, and how it's stacking up
 against benchmarks like the S&P 500, the Nasdaq-100, or whatever else I feel
-like comparing against. Data refreshes every few minutes.
+like comparing against. Data refreshes every few minutes during market hours.
 
 ## Inside
 

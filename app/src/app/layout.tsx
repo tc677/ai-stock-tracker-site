@@ -37,7 +37,8 @@ export default function RootLayout({
         <Nav />
         <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8">{children}</main>
         <footer className="border-t border-zinc-200 dark:border-zinc-800 py-4 text-center text-xs text-zinc-500">
-          Data delayed up to 5 minutes. Not investment advice.
+          Refreshes every minute during market hours. For informational use only,
+          not investment advice.
         </footer>
       </body>
     </html>

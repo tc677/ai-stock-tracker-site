@@ -21,6 +21,7 @@ export default async function PositionsPage() {
             <thead className="bg-zinc-50 dark:bg-zinc-900 text-left">
               <tr>
                 <Th>Symbol</Th>
+                <Th>Side</Th>
                 <Th align="right">Qty</Th>
                 <Th align="right">Avg entry</Th>
                 <Th align="right">Current</Th>
@@ -31,6 +32,7 @@ export default async function PositionsPage() {
             </thead>
             <tbody>
               {positions.map((p) => {
+                const isShort = p.qty < 0;
                 const positive = p.unrealized_pl >= 0;
                 const color = positive
                   ? "text-emerald-600 dark:text-emerald-400"
@@ -43,10 +45,21 @@ export default async function PositionsPage() {
                     <Td>
                       <span className="font-medium">{p.symbol}</span>
                     </Td>
-                    <Td align="right">{p.qty}</Td>
+                    <Td>
+                      <span
+                        className={`text-xs font-semibold uppercase ${
+                          isShort
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-sky-600 dark:text-sky-400"
+                        }`}
+                      >
+                        {isShort ? "Short" : "Long"}
+                      </span>
+                    </Td>
+                    <Td align="right">{Math.abs(p.qty)}</Td>
                     <Td align="right">{fmtUSD(p.avg_entry_price)}</Td>
                     <Td align="right">{fmtUSD(p.current_price)}</Td>
-                    <Td align="right">{fmtUSD(p.market_value)}</Td>
+                    <Td align="right">{fmtUSD(Math.abs(p.market_value))}</Td>
                     <Td align="right">
                       <span className={color}>
                         {fmtUSD(p.unrealized_pl)} ({fmtPct(p.unrealized_pl_pct)})
