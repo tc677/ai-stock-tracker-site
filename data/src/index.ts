@@ -8,6 +8,21 @@ export const handler = async () => {
   const startedAt = Date.now();
   try {
     await ensureSchema();
+
+    // Skip pulling when the market is closed (weekends, holidays, off-hours).
+    // The EventBridge cron filters most of these out, but this catches
+    // holidays and the small UTC-vs-DST mismatch on the schedule window.
+    // FORCE_PULL=1 bypasses the check (useful for manual runs).
+    if (!process.env.FORCE_PULL) {
+      const clock = await alpaca.clock();
+      if (!clock.is_open) {
+        console.log(
+          `market closed, skipping. next open: ${clock.next_open}`,
+        );
+        return { ok: true, skipped: "market_closed", ms: Date.now() - startedAt };
+      }
+    }
+
     await pull();
     return { ok: true, ms: Date.now() - startedAt };
   } catch (err) {

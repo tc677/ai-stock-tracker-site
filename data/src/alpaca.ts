@@ -40,6 +40,13 @@ export type AlpacaOrder = {
   status: string;
 };
 
+export type AlpacaClock = {
+  timestamp: string;
+  is_open: boolean;
+  next_open: string;
+  next_close: string;
+};
+
 export const alpaca = {
   account: () => get<AlpacaAccount>("/v2/account"),
   positions: () => get<AlpacaPosition[]>("/v2/positions"),
@@ -47,4 +54,5 @@ export const alpaca = {
     get<AlpacaOrder[]>(
       `/v2/orders?status=filled&after=${since.toISOString()}&direction=desc&limit=500`,
     ),
+  clock: () => get<AlpacaClock>("/v2/clock"),
 };
