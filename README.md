@@ -12,6 +12,18 @@ like comparing against. Data refreshes every few minutes.
 - **`data/`** — pulls fresh data from Alpaca on a schedule
 - **`infra/`** — the cloud setup, as code
 
+## How it flows
+
+```
+Visitors → CloudFront (CDN + WAF) → EC2 (web) → Postgres
+                                         ↑
+                                    scheduled puller → Alpaca
+```
+
+CloudFront caches the pages at the edge, so the origin barely breaks a sweat.
+The puller runs on the same EC2 every few minutes and refreshes the data
+behind the scenes.
+
 ## Stack
 
 Next.js · TypeScript · Tailwind · PostgreSQL · AWS (EC2, RDS, CloudFront, WAF)
