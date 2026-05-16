@@ -15,19 +15,19 @@ like comparing against. Data refreshes every few minutes.
 ## How it flows
 
 ```
-Visitors → CloudFront (CDN + WAF) → EC2 (web) → Postgres
-                                         ↑
-                                    scheduled puller → Alpaca
+Visitors → CloudFront (CDN + WAF) → internal ALB → Fargate (web) → Postgres
+                                                                       ↑
+                          EventBridge → Fargate (puller) → Alpaca ─────┘
 ```
 
 CloudFront caches the pages at the edge, so the origin barely breaks a sweat.
-The puller runs on the same EC2 every few minutes and refreshes the data
-behind the scenes.
+The puller runs as a short-lived container every few minutes and refreshes
+the data behind the scenes.
 
 ## Stack
 
-Next.js · TypeScript · Tailwind · PostgreSQL · AWS (EC2, RDS, CloudFront, WAF)
-· OpenTofu · GitHub Actions
+Next.js · TypeScript · Tailwind · PostgreSQL · AWS (ECS Fargate, RDS,
+CloudFront, WAF, ALB, EventBridge) · OpenTofu · GitHub Actions
 
 Trading data comes from [Alpaca](https://alpaca.markets).
 

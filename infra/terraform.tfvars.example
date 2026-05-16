@@ -1,0 +1,16 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+
+region            = "us-east-1"
+
+alpaca_key_id     = "PKxxxxxxxxxxxxxxxxxx"
+alpaca_secret_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+alpaca_base_url   = "https://paper-api.alpaca.markets"
+
+# Where CloudWatch alarms go. You'll need to click the confirmation
+# email AWS sends after the first apply.
+alert_email = "you@example.com"
+
+# Override only if you fork or rename. Default is tc677/ai-stock-tracker-site.
+# github_repo = "tc677/ai-stock-tracker-site"
+
+# domain_name = "dashboard.example.com"   # uncomment when ready

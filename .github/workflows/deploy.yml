@@ -1,0 +1,106 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to deploy"
+        required: true
+        default: "both"
+        type: choice
+        options: [web, puller, both]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+  CLUSTER: stock-dashboard-cluster
+  WEB_SERVICE: stock-dashboard-web
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.changes.outputs.web }}
+      puller: ${{ steps.changes.outputs.puller }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 2 }
+      - id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            web:
+              - 'app/**'
+            puller:
+              - 'data/**'
+
+  web:
+    needs: detect
+    if: github.event_name == 'workflow_dispatch' && (inputs.target == 'web' || inputs.target == 'both') || (github.event_name == 'push' && needs.detect.outputs.web == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push web image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          REPO="$REGISTRY/stock-dashboard/web"
+          docker build --platform linux/arm64 -t "$REPO:${{ github.sha }}" -t "$REPO:latest" ./app
+          docker push "$REPO:${{ github.sha }}"
+          docker push "$REPO:latest"
+
+      - name: Force new deployment on ECS web service
+        run: |
+          aws ecs update-service \
+            --cluster "$CLUSTER" \
+            --service "$WEB_SERVICE" \
+            --force-new-deployment \
+            --no-cli-pager
+          aws ecs wait services-stable \
+            --cluster "$CLUSTER" \
+            --services "$WEB_SERVICE"
+
+  puller:
+    needs: detect
+    if: github.event_name == 'workflow_dispatch' && (inputs.target == 'puller' || inputs.target == 'both') || (github.event_name == 'push' && needs.detect.outputs.puller == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push puller image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          REPO="$REGISTRY/stock-dashboard/puller"
+          docker build --platform linux/arm64 -t "$REPO:${{ github.sha }}" -t "$REPO:latest" ./data
+          docker push "$REPO:${{ github.sha }}"
+          docker push "$REPO:latest"
+          # The EventBridge schedule pulls :latest on the next run — no
+          # explicit trigger needed.
