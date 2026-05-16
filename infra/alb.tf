@@ -1,16 +1,29 @@
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
 resource "aws_security_group" "alb" {
   name        = "${var.project}-alb"
   description = "Internal ALB in front of the web service"
   vpc_id      = aws_vpc.main.id
 
-  # ALB is internal; only entities inside the VPC reach it. CloudFront's
-  # VPC Origin shows up as traffic from inside the VPC.
+  # ALB is internal. Allow port 80 from both the VPC CIDR (for any in-VPC
+  # traffic) and the CloudFront managed prefix list (for VPC Origin
+  # traffic, which AWS documents as coming from CloudFront-owned IPs).
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = [aws_vpc.main.cidr_block]
-    description = "HTTP from inside the VPC (CloudFront VPC Origin)"
+    description = "HTTP from inside the VPC"
+  }
+
+  ingress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront.id]
+    description     = "HTTP from CloudFront VPC Origin"
   }
 
   egress {

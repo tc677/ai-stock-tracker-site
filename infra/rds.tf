@@ -5,7 +5,7 @@ resource "aws_db_subnet_group" "main" {
 
 resource "aws_security_group" "db" {
   name        = "${var.project}-db"
-  description = "RDS Postgres — accepts traffic only from ECS tasks"
+  description = "RDS Postgres - accepts traffic only from ECS tasks"
   vpc_id      = aws_vpc.main.id
 
   egress {

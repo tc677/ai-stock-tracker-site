@@ -1,9 +1,8 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { alpaca } from "./alpaca.js";
 import { db } from "./db.js";
 import { getQuote, getYtdReturnPct } from "./market.js";
+// Bundled as a string via esbuild's text loader at build time.
+import schemaSql from "./schema.sql";
 
 export const handler = async () => {
   const startedAt = Date.now();
@@ -20,9 +19,8 @@ export const handler = async () => {
 };
 
 async function ensureSchema() {
-  const here = dirname(fileURLToPath(import.meta.url));
-  const sql = readFileSync(join(here, "schema.sql"), "utf8");
-  await db.query(sql);
+  // Idempotent - schema.sql uses CREATE TABLE IF NOT EXISTS.
+  await db.query(schemaSql);
 }
 
 async function pull() {
@@ -131,9 +129,14 @@ async function upsertDailyValue(date: string, symbol: string, value: number) {
   );
 }
 
-if (process.env.RUN_LOCAL) {
-  handler().then(console.log).catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
+// Auto-invoke when not running inside AWS Lambda. Lambda imports the module
+// and calls `handler` itself; everywhere else (Fargate, local dev, plain
+// `node index.js`) we run it ourselves.
+if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  handler()
+    .then((r) => console.log(JSON.stringify(r)))
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    });
 }

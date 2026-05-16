@@ -47,7 +47,7 @@ resource "aws_security_group_rule" "web_from_alb" {
   description              = "Next.js port from ALB"
 }
 
-# Task execution role — pulls images from ECR, writes logs, reads secrets.
+# Task execution role - pulls images from ECR, writes logs, reads secrets.
 data "aws_iam_policy_document" "ecs_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -83,7 +83,7 @@ resource "aws_iam_role_policy" "task_execution_secrets" {
   })
 }
 
-# Task role — runtime identity of the container. Currently no extra perms
+# Task role - runtime identity of the container. Currently no extra perms
 # needed; add here if the app or puller ever calls AWS APIs at runtime.
 resource "aws_iam_role" "task" {
   name               = "${var.project}-task"
@@ -168,7 +168,7 @@ resource "aws_ecs_service" "web" {
   depends_on = [aws_lb_listener.web]
 }
 
-# Puller task definition — one-shot container.
+# Puller task definition - one-shot container.
 resource "aws_ecs_task_definition" "puller" {
   family                   = "${var.project}-puller"
   network_mode             = "awsvpc"

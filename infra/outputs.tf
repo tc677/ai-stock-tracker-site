@@ -17,7 +17,7 @@ output "ecs_puller_task_family" {
 
 output "alb_dns_name" {
   value       = aws_lb.web.dns_name
-  description = "Internal ALB DNS — not reachable from the internet, only via CloudFront."
+  description = "Internal ALB DNS - not reachable from the internet, only via CloudFront."
 }
 
 output "ecr_web_repo" {

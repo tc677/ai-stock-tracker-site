@@ -13,7 +13,7 @@ resource "aws_sns_topic_subscription" "alerts_email" {
 resource "aws_cloudwatch_metric_alarm" "cf_5xx" {
   provider            = aws.us_east_1
   alarm_name          = "${var.project}-cf-5xx-error-rate"
-  alarm_description   = "CloudFront 5xx error rate exceeded 5% — likely origin issue or broken deploy."
+  alarm_description   = "CloudFront 5xx error rate exceeded 5% - likely origin issue or broken deploy."
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "5xxErrorRate"
@@ -35,7 +35,7 @@ resource "aws_cloudwatch_metric_alarm" "cf_5xx" {
 resource "aws_cloudwatch_metric_alarm" "cf_request_spike" {
   provider            = aws.us_east_1
   alarm_name          = "${var.project}-cf-request-spike"
-  alarm_description   = "CloudFront requests >50k in 5 min — possible DDoS or runaway scraper."
+  alarm_description   = "CloudFront requests >50k in 5 min - possible DDoS or runaway scraper."
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "Requests"
@@ -55,7 +55,7 @@ resource "aws_cloudwatch_metric_alarm" "cf_request_spike" {
 
 resource "aws_cloudwatch_metric_alarm" "web_unhealthy_hosts" {
   alarm_name          = "${var.project}-web-unhealthy-targets"
-  alarm_description   = "ALB sees zero healthy targets for the web target group — service is down."
+  alarm_description   = "ALB sees zero healthy targets for the web target group - service is down."
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 2
   metric_name         = "HealthyHostCount"
@@ -75,7 +75,7 @@ resource "aws_cloudwatch_metric_alarm" "web_unhealthy_hosts" {
 }
 
 # Catches cost runaway across all services. Threshold is intentionally
-# generous — bumps you only if something is seriously wrong.
+# generous - bumps you only if something is seriously wrong.
 resource "aws_cloudwatch_metric_alarm" "estimated_charges" {
   provider            = aws.us_east_1
   alarm_name          = "${var.project}-estimated-charges"

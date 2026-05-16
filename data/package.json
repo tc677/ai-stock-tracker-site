@@ -4,7 +4,7 @@
   "private": true,
   "description": "Lambda puller: Alpaca account/positions/activity + Yahoo index data → Postgres",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --platform=node --target=node22 --outfile=dist/index.js --minify --external:pg-native",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node22 --outfile=dist/index.js --minify --external:pg-native --loader:.sql=text",
     "package": "npm run build && cd dist && zip -r ../puller.zip index.js",
     "dev": "tsx src/index.ts",
     "migrate": "tsx src/migrate.ts"
