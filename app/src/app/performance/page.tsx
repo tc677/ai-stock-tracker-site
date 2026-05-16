@@ -12,13 +12,11 @@ export default async function PerformancePage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-semibold tracking-tight">Performance</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">Performance (YTD)</h1>
 
-      <EquityChart initialRange="YTD" initialSeries={series} />
+      <EquityChart series={series} />
 
-      {!enough ? null : (
-        <PerformanceTable series={series} />
-      )}
+      {enough && <PerformanceTable series={series} />}
     </div>
   );
 }
@@ -32,10 +30,11 @@ function PerformanceTable({
     new Set(series.flatMap((s) => s.points.map((p) => p.t))),
   ).sort();
   const firstBy = (sym: string) =>
-    series.find((s) => s.symbol === sym)?.points[0]?.value ?? null;
-  const valueAt = (sym: string, t: string) =>
-    series.find((s) => s.symbol === sym)?.points.find((p) => p.t === t)
-      ?.value ?? null;
+    Number(series.find((s) => s.symbol === sym)?.points[0]?.value ?? 0);
+  const valueAt = (sym: string, t: string) => {
+    const p = series.find((s) => s.symbol === sym)?.points.find((p) => p.t === t);
+    return p ? Number(p.value) : null;
+  };
 
   return (
     <section>
@@ -67,7 +66,7 @@ function PerformanceTable({
                   {series.map((s) => {
                     const base = firstBy(s.symbol);
                     const v = valueAt(s.symbol, t);
-                    const pct = base && v ? ((v - base) / base) * 100 : null;
+                    const pct = base > 0 && v != null ? ((v - base) / base) * 100 : null;
                     return (
                       <td
                         key={s.symbol}

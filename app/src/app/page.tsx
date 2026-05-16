@@ -1,20 +1,12 @@
-import { EquityChart } from "@/components/EquityChart";
-import {
-  getBenchmarks,
-  getPerformanceSeries,
-  getSummary,
-} from "@/lib/queries";
+import { getBenchmarks, getSummary } from "@/lib/queries";
 import { fmtDateTime, fmtPct, fmtUSD } from "@/lib/format";
 
 export const revalidate = 10;
 
-const DEFAULT_RANGE = "1M" as const;
-
 export default async function Home() {
-  const [summary, benchmarks, series] = await Promise.all([
+  const [summary, benchmarks] = await Promise.all([
     getSummary().catch(() => null),
     getBenchmarks().catch(() => []),
-    getPerformanceSeries(DEFAULT_RANGE).catch(() => []),
   ]);
 
   if (!summary) {
@@ -50,11 +42,6 @@ export default async function Home() {
             year to date
           </span>
         </div>
-      </section>
-
-      {/* Chart */}
-      <section>
-        <EquityChart initialRange={DEFAULT_RANGE} initialSeries={series} />
       </section>
 
       {/* Benchmark comparison */}

@@ -8,17 +8,37 @@ import type {
 } from "./types";
 
 export async function getSummary(): Promise<AccountSummary | null> {
-  const { rows } = await db.query<AccountSummary>(
+  const { rows } = await db.query<{
+    portfolio_value: string;
+    cash: string;
+    ytd_return_pct: string;
+    ytd_return_dollar: string;
+    updated_at: string;
+  }>(
     `SELECT portfolio_value, cash, ytd_return_pct, ytd_return_dollar, updated_at
        FROM account_snapshot
        ORDER BY updated_at DESC
        LIMIT 1`,
   );
-  return rows[0] ?? null;
+  const r = rows[0];
+  if (!r) return null;
+  return {
+    portfolio_value: Number(r.portfolio_value),
+    cash: Number(r.cash),
+    ytd_return_pct: Number(r.ytd_return_pct),
+    ytd_return_dollar: Number(r.ytd_return_dollar),
+    updated_at: r.updated_at,
+  };
 }
 
 export async function getBenchmarks(): Promise<Benchmark[]> {
-  const { rows } = await db.query<Benchmark>(
+  const { rows } = await db.query<{
+    symbol: string;
+    label: string;
+    kind: string;
+    ytd_pct: string;
+    current_price: string;
+  }>(
     `SELECT b.symbol, b.label, b.kind,
             COALESCE(s.ytd_pct, 0)       AS ytd_pct,
             COALESCE(s.current_price, 0) AS current_price
@@ -26,28 +46,61 @@ export async function getBenchmarks(): Promise<Benchmark[]> {
        LEFT JOIN benchmark_snapshot s ON s.symbol = b.symbol
        ORDER BY b.sort_order, b.symbol`,
   );
-  return rows;
+  return rows.map((r) => ({
+    ...r,
+    ytd_pct: Number(r.ytd_pct),
+    current_price: Number(r.current_price),
+  }));
 }
 
 export async function getPositions(): Promise<Position[]> {
-  const { rows } = await db.query<Position>(
+  const { rows } = await db.query<{
+    symbol: string;
+    qty: string;
+    avg_entry_price: string;
+    current_price: string;
+    market_value: string;
+    unrealized_pl: string;
+    unrealized_pl_pct: string;
+    opened_at: string;
+  }>(
     `SELECT symbol, qty, avg_entry_price, current_price,
             market_value, unrealized_pl, unrealized_pl_pct, opened_at
        FROM positions
        ORDER BY market_value DESC`,
   );
-  return rows;
+  return rows.map((r) => ({
+    ...r,
+    qty: Number(r.qty),
+    avg_entry_price: Number(r.avg_entry_price),
+    current_price: Number(r.current_price),
+    market_value: Number(r.market_value),
+    unrealized_pl: Number(r.unrealized_pl),
+    unrealized_pl_pct: Number(r.unrealized_pl_pct),
+  }));
 }
 
 export async function getActivity(limit = 50): Promise<Activity[]> {
-  const { rows } = await db.query<Activity>(
+  const { rows } = await db.query<{
+    id: string;
+    symbol: string;
+    side: "buy" | "sell";
+    qty: string;
+    price: string;
+    filled_at: string;
+  }>(
     `SELECT id, symbol, side, qty, price, filled_at
        FROM activity
        ORDER BY filled_at DESC
        LIMIT $1`,
     [limit],
   );
-  return rows;
+  // pg returns NUMERIC as strings; coerce to numbers so callers can do math.
+  return rows.map((r) => ({
+    ...r,
+    qty: Number(r.qty),
+    price: Number(r.price),
+  }));
 }
 
 import { isIntraday, rangeSinceClause, type Range } from "./ranges";

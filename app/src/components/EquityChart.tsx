@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -11,8 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import type { PerformanceSeries } from "@/lib/types";
-import { RANGES, RANGE_LABELS, type Range } from "@/lib/ranges";
-import { fmtDate, fmtDateTime, fmtPct } from "@/lib/format";
+import { fmtDate, fmtPct } from "@/lib/format";
 
 const PORTFOLIO_COLOR = "#10b981"; // emerald-500
 const BENCHMARK_COLORS = ["#64748b", "#3b82f6", "#a855f7", "#f59e0b", "#ec4899"];
@@ -21,127 +19,29 @@ type Row = {
   t: string;
 } & Record<string, number | string>;
 
-export function EquityChart({
-  initialRange = "YTD" as Range,
-  initialSeries = [],
-}: {
-  initialRange?: Range;
-  initialSeries?: PerformanceSeries[];
-}) {
-  const [range, setRange] = useState<Range>(initialRange);
-  const [series, setSeries] = useState<PerformanceSeries[]>(initialSeries);
-  const [loading, setLoading] = useState(false);
-
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Skip the first fetch if we already have server-rendered data for this range.
-    if (range === initialRange && series === initialSeries) return;
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    fetch(`/api/performance?range=${range}`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-        return r.json();
-      })
-      .then((data: { series: PerformanceSeries[] }) => {
-        if (!cancelled) setSeries(data.series ?? []);
-      })
-      .catch((e) => {
-        if (!cancelled) {
-          console.error("chart fetch failed", e);
-          setError(e instanceof Error ? e.message : String(e));
-        }
-      })
-      .finally(() => !cancelled && setLoading(false));
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range]);
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-3 gap-2">
-        <h2 className="text-sm font-medium text-zinc-500">Portfolio vs. benchmarks</h2>
-        <RangeSelector value={range} onChange={setRange} />
-      </div>
-      {error ? (
-        <div className="h-64 sm:h-80 flex items-center justify-center rounded-lg border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 text-sm px-4 text-center">
-          Failed to load: {error}
-        </div>
-      ) : (
-        <Chart series={series} range={range} loading={loading} />
-      )}
-    </div>
-  );
-}
-
-function RangeSelector({
-  value,
-  onChange,
-}: {
-  value: Range;
-  onChange: (r: Range) => void;
-}) {
-  return (
-    <div className="inline-flex items-center rounded-md border border-zinc-200 dark:border-zinc-800 p-0.5 text-xs">
-      {RANGES.map((r) => (
-        <button
-          key={r}
-          onClick={() => onChange(r)}
-          className={`px-2.5 py-1 rounded transition-colors ${
-            value === r
-              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-              : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-          }`}
-        >
-          {RANGE_LABELS[r]}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function Chart({
-  series,
-  range,
-  loading,
-}: {
-  series: PerformanceSeries[];
-  range: Range;
-  loading: boolean;
-}) {
+export function EquityChart({ series }: { series: PerformanceSeries[] }) {
   const enough = series.some((s) => s.points.length >= 2);
-
-  if (loading && !enough) {
-    return (
-      <div className="h-64 sm:h-80 flex items-center justify-center text-sm text-zinc-500">
-        Loading...
-      </div>
-    );
-  }
 
   if (!enough) {
     return (
       <div className="h-64 sm:h-80 flex items-center justify-center rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-500 text-sm">
-        Not enough history for this range yet.
+        Not enough history yet.
       </div>
     );
   }
 
   // Normalize each series to % return from its first point in this window.
+  // Coerce values to numbers - pg returns NUMERIC as strings.
   const allTs = Array.from(
     new Set(series.flatMap((s) => s.points.map((p) => p.t))),
   ).sort();
   const baselines = new Map(
-    series.map((s) => [s.symbol, s.points[0]?.value ?? null]),
+    series.map((s) => [s.symbol, Number(s.points[0]?.value ?? 0)]),
   );
   const pointBySymbolTs = new Map<string, number>();
   for (const s of series) {
     for (const p of s.points) {
-      pointBySymbolTs.set(`${s.symbol}|${p.t}`, p.value);
+      pointBySymbolTs.set(`${s.symbol}|${p.t}`, Number(p.value));
     }
   }
 
@@ -150,7 +50,7 @@ function Chart({
     for (const s of series) {
       const base = baselines.get(s.symbol);
       const v = pointBySymbolTs.get(`${s.symbol}|${t}`);
-      if (base != null && v != null && base !== 0) {
+      if (base != null && base > 0 && v != null && !isNaN(v)) {
         row[s.symbol] = ((v - base) / base) * 100;
       }
     }
@@ -159,10 +59,9 @@ function Chart({
 
   const portfolio = series.find((s) => s.symbol === "PORTFOLIO");
   const benchmarks = series.filter((s) => s.symbol !== "PORTFOLIO");
-  const isIntra = range === "1D";
 
   return (
-    <div className={loading ? "opacity-50 transition-opacity" : ""}>
+    <div>
       <div className="h-64 sm:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
@@ -174,15 +73,7 @@ function Chart({
             />
             <XAxis
               dataKey="t"
-              tickFormatter={(t) =>
-                isIntra
-                  ? new Date(t).toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      timeZone: "America/New_York",
-                    })
-                  : fmtDate(t)
-              }
+              tickFormatter={(t) => fmtDate(t)}
               stroke="currentColor"
               className="text-zinc-500"
               tick={{ fontSize: 11 }}
@@ -196,7 +87,7 @@ function Chart({
               width={48}
             />
             <Tooltip
-              labelFormatter={(t) => (isIntra ? fmtDateTime(t as string) : fmtDate(t as string))}
+              labelFormatter={(t) => fmtDate(t as string)}
               formatter={(value, name) => {
                 const label =
                   name === "PORTFOLIO"
@@ -223,6 +114,7 @@ function Chart({
                 strokeDasharray="4 4"
                 dot={false}
                 isAnimationActive={false}
+                connectNulls
               />
             ))}
             {portfolio && (
@@ -233,6 +125,7 @@ function Chart({
                 strokeWidth={2.5}
                 dot={false}
                 isAnimationActive={false}
+                connectNulls
               />
             )}
           </LineChart>
