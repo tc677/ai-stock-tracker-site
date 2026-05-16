@@ -54,3 +54,9 @@ variable "alert_email" {
   type        = string
   description = "Email address that receives CloudWatch alarm notifications."
 }
+
+variable "starting_equity" {
+  type        = number
+  default     = 10000
+  description = "Account starting balance, in USD. Used as the baseline for YTD return calculations."
+}

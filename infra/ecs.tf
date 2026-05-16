@@ -187,6 +187,9 @@ resource "aws_ecs_task_definition" "puller" {
     name      = "puller"
     image     = "${aws_ecr_repository.puller.repository_url}:latest"
     essential = true
+    environment = [
+      { name = "STARTING_EQUITY", value = tostring(var.starting_equity) },
+    ]
     secrets = [
       { name = "DATABASE_URL", valueFrom = "${aws_secretsmanager_secret.app.arn}:DATABASE_URL::" },
       { name = "ALPACA_KEY_ID", valueFrom = "${aws_secretsmanager_secret.app.arn}:ALPACA_KEY_ID::" },
