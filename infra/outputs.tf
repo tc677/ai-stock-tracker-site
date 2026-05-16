@@ -1,6 +1,11 @@
 output "cloudfront_url" {
   value       = "https://${aws_cloudfront_distribution.main.domain_name}"
-  description = "Public URL of the dashboard"
+  description = "Public URL of the dashboard (the default *.cloudfront.net name)"
+}
+
+output "site_url" {
+  value       = var.domain_name != "" ? "https://${var.domain_name}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+  description = "Canonical site URL - custom domain when set, CloudFront default otherwise"
 }
 
 output "ecs_cluster_name" {

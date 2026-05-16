@@ -20,6 +20,7 @@ resource "aws_cloudfront_distribution" "main" {
   price_class     = "PriceClass_100"
   http_version    = "http2and3"
   web_acl_id      = aws_wafv2_web_acl.cf.arn
+  aliases         = local.domain_list
 
   origin {
     domain_name = aws_lb.web.dns_name
@@ -37,6 +38,14 @@ resource "aws_cloudfront_distribution" "main" {
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = aws_cloudfront_cache_policy.html.id
+
+    dynamic "function_association" {
+      for_each = local.has_domain ? [1] : []
+      content {
+        event_type   = "viewer-request"
+        function_arn = aws_cloudfront_function.redirect_www[0].arn
+      }
+    }
   }
 
   ordered_cache_behavior {
@@ -66,7 +75,10 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = !local.has_domain
+    acm_certificate_arn            = local.has_domain ? aws_acm_certificate_validation.main[0].certificate_arn : null
+    ssl_support_method             = local.has_domain ? "sni-only" : null
+    minimum_protocol_version       = local.has_domain ? "TLSv1.2_2021" : "TLSv1"
   }
 }
 
