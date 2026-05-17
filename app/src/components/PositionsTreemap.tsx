@@ -74,11 +74,27 @@ type TileProps = {
   plPct?: number;
 };
 
+// Pick black or white for the label based on the tile's perceived luminance.
+// Uses Rec. 709 weights; threshold ~150 reads well on this palette.
+function textColorFor(fill: string): string {
+  const m = fill.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (!m) return "#fafafa";
+  const r = Number(m[1]);
+  const g = Number(m[2]);
+  const b = Number(m[3]);
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return lum > 150 ? "#000000" : "#ffffff";
+}
+
 function Tile(props: TileProps) {
   const { x = 0, y = 0, width = 0, height = 0, name = "", payload } = props;
   const pct = payload?.plPct ?? props.plPct ?? 0;
-  const showLabel = width > 48 && height > 32;
-  const showPct = width > 64 && height > 48;
+  const fill = fillFor(pct);
+  const textColor = textColorFor(fill);
+  const showLabel = width > 36 && height > 24;
+  const showPct = width > 60 && height > 44;
+  const symbolSize = Math.min(28, Math.max(13, Math.min(width, height) / 3.5));
+  const pctSize = Math.min(16, Math.max(11, symbolSize * 0.6));
 
   return (
     <g>
@@ -87,17 +103,17 @@ function Tile(props: TileProps) {
         y={y}
         width={width}
         height={height}
-        style={{ fill: fillFor(pct), stroke: "#0a0a0a", strokeWidth: 1 }}
+        style={{ fill, stroke: "#0a0a0a", strokeWidth: 1 }}
       />
       {showLabel && (
         <text
           x={x + width / 2}
-          y={y + height / 2 - (showPct ? 6 : 0)}
+          y={y + height / 2 - (showPct ? symbolSize * 0.4 : 0)}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill="#fafafa"
-          fontSize={Math.min(16, Math.max(11, width / 6))}
-          fontWeight={600}
+          fill={textColor}
+          fontSize={symbolSize}
+          fontWeight={800}
         >
           {name}
         </text>
@@ -105,12 +121,12 @@ function Tile(props: TileProps) {
       {showPct && (
         <text
           x={x + width / 2}
-          y={y + height / 2 + 10}
+          y={y + height / 2 + symbolSize * 0.55}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill="#fafafa"
-          fontSize={Math.min(12, Math.max(10, width / 8))}
-          opacity={0.9}
+          fill={textColor}
+          fontSize={pctSize}
+          fontWeight={700}
         >
           {pct >= 0 ? "+" : ""}
           {fmtPct(pct)}
