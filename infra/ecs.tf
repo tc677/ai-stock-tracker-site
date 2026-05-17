@@ -208,7 +208,7 @@ resource "aws_ecs_task_definition" "puller" {
   }])
 }
 
-# EventBridge Scheduler runs the puller every 5 minutes.
+# EventBridge Scheduler runs the puller every minute.
 data "aws_iam_policy_document" "scheduler_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -249,7 +249,7 @@ resource "aws_iam_role_policy" "scheduler_run_task" {
 
 resource "aws_scheduler_schedule" "puller" {
   name = "${var.project}-puller"
-  # Mon-Fri, every 5 min from 13:00-21:59 UTC. Covers US market hours
+  # Mon-Fri, every minute from 13:00-21:59 UTC. Covers US market hours
   # (9:30 AM - 4:00 PM ET) in both EST and EDT. The puller also checks
   # Alpaca's clock endpoint as a safety net for market holidays.
   schedule_expression          = var.puller_schedule

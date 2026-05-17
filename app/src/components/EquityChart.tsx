@@ -15,10 +15,10 @@ import { fmtDate, fmtPct } from "@/lib/format";
 const PORTFOLIO_COLOR = "#10b981"; // emerald-500
 // Specific colors per known benchmark; fallback palette for anything else.
 const BENCHMARK_COLOR_MAP: Record<string, string> = {
-  "^GSPC": "#ef4444", // red - S&P 500
-  "^NDX": "#06b6d4", // cyan/aqua - Nasdaq-100
-  "^RUI": "#a855f7", // purple - Russell 1000
-  "^RUT": "#f59e0b", // amber - Russell 2000
+  SPY: "#ef4444",  // red - S&P 500
+  QQQ: "#06b6d4",  // cyan/aqua - Nasdaq-100
+  VTI: "#a855f7",  // purple - US Total Market
+  VXUS: "#f59e0b", // amber - International ex-US
 };
 const FALLBACK_COLORS = ["#64748b", "#3b82f6", "#a855f7", "#f59e0b", "#ec4899"];
 

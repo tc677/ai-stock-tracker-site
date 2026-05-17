@@ -8,7 +8,7 @@ export const handler = async () => {
   const startedAt = Date.now();
   try {
     await ensureSchema();
-    await maybeMigrateToYahooIndices();
+    await maybeMigrateBenchmarks();
 
     // One-time backfill of historical data from Alpaca. Runs only if the
     // puller_meta marker isn't set. Independent of market hours - the
@@ -62,33 +62,37 @@ async function setMeta(key: string, value: string) {
   );
 }
 
-async function maybeMigrateToYahooIndices() {
-  if (await getMeta("migrated_to_yahoo_indices")) return;
-  console.log("migrating benchmarks from Alpaca ETFs to Yahoo indices...");
+async function maybeMigrateBenchmarks() {
+  // History of benchmark symbol changes during development. Each migration
+  // step is idempotent via its own marker.
+  if (!(await getMeta("migrated_to_yahoo_indices"))) {
+    await dropBenchmarks(["SPY", "QQQ", "IWB", "IWM"]);
+    await setMeta("migrated_to_yahoo_indices", new Date().toISOString());
+  }
+  if (!(await getMeta("migrated_back_to_etfs"))) {
+    console.log("migrating benchmarks from index symbols back to ETFs...");
+    await dropBenchmarks(["^GSPC", "^NDX", "^RUI", "^RUT"]);
+    await setMeta("migrated_back_to_etfs", new Date().toISOString());
+    console.log("migration complete; ETF benchmarks will backfill on this run");
+  }
+  if (!(await getMeta("dropped_russell_etfs"))) {
+    console.log("dropping Russell ETF benchmarks (IWB, IWM)...");
+    await dropBenchmarks(["IWB", "IWM"]);
+    await setMeta("dropped_russell_etfs", new Date().toISOString());
+  }
+}
 
-  const oldSymbols = ["SPY", "QQQ", "IWB", "IWM"];
-  await db.query(
-    `DELETE FROM performance_daily WHERE symbol = ANY($1)`,
-    [oldSymbols],
-  );
-  await db.query(
-    `DELETE FROM performance_intraday WHERE symbol = ANY($1)`,
-    [oldSymbols],
-  );
+async function dropBenchmarks(symbols: string[]) {
+  await db.query(`DELETE FROM performance_daily WHERE symbol = ANY($1)`, [symbols]);
+  await db.query(`DELETE FROM performance_intraday WHERE symbol = ANY($1)`, [symbols]);
   // benchmark_snapshot has ON DELETE CASCADE on the benchmarks FK.
-  await db.query(`DELETE FROM benchmarks WHERE symbol = ANY($1)`, [oldSymbols]);
-
-  // Clear any per-benchmark backfill markers for the old symbols so we
-  // don't leave dead state behind.
+  await db.query(`DELETE FROM benchmarks WHERE symbol = ANY($1)`, [symbols]);
   await db.query(
     `DELETE FROM puller_meta
       WHERE key LIKE 'backfilled_benchmark_%'
         AND replace(key, 'backfilled_benchmark_', '') = ANY($1)`,
-    [oldSymbols],
+    [symbols],
   );
-
-  await setMeta("migrated_to_yahoo_indices", new Date().toISOString());
-  console.log("migration complete; new benchmarks will backfill on this run");
 }
 
 async function maybeBackfill() {

@@ -48,12 +48,14 @@ CREATE TABLE IF NOT EXISTS benchmarks (
 );
 
 -- Seed starter benchmarks. Add more by inserting a row - no code change.
--- Yahoo Finance index symbols (more reliable than Alpaca's IEX ETF data).
+-- ETF proxies for the major US indices. Finnhub's free tier handles
+-- these but not raw index symbols (^GSPC etc.). Alpaca bars cover them
+-- with dividend adjustment so the historical returns are honest.
 INSERT INTO benchmarks (symbol, label, kind, sort_order) VALUES
-  ('^GSPC', 'S&P 500',      'index', 10),
-  ('^NDX',  'Nasdaq-100',   'index', 20),
-  ('^RUI',  'Russell 1000', 'index', 30),
-  ('^RUT',  'Russell 2000', 'index', 40)
+  ('SPY',  'S&P 500',          'etf', 10),
+  ('QQQ',  'Nasdaq-100',       'etf', 20),
+  ('VTI',  'US Total Market',  'etf', 30),
+  ('VXUS', 'Intl ex-US',       'etf', 40)
 ON CONFLICT (symbol) DO NOTHING;
 
 -- Latest snapshot per benchmark, upserted each puller run.

@@ -1,84 +1,74 @@
-// Market data for benchmarks via Stooq. Free CSV download endpoint, no API
-// key, no rate limit issues from AWS IPs (which Yahoo aggressively blocks).
+// Market data for benchmarks. Single source: Alpaca's data API.
+//   - /v2/stocks/{sym}/trades/latest for the current price.
+//   - /v2/stocks/{sym}/bars (timeframe=1Day, adjustment=all) for history.
 //
-// Stooq uses its own symbol codes; we map our internal Yahoo-style names to
-// Stooq codes when calling.
+// We use ETF proxies (SPY, QQQ, IWB, IWM) rather than raw index symbols
+// since Alpaca's data API is for tradable instruments. adjustment=all
+// applies both splits and dividends so total-return comparisons are honest
+// — without it, dividend-heavy ETFs (e.g. IWM) show fake large drops.
 
-const STOOQ_SYMBOL: Record<string, string> = {
-  "^GSPC": "^spx", // S&P 500
-  "^NDX": "^ndx", // Nasdaq-100
-  "^RUI": "^rui", // Russell 1000
-  "^RUT": "^rut", // Russell 2000
-};
+const ALPACA_DATA_BASE = "https://data.alpaca.markets/v2";
 
-const stooqOf = (s: string) => STOOQ_SYMBOL[s] ?? s.toLowerCase();
-
-const HEADERS = {
-  "User-Agent":
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-};
-
-// Stooq returns CSV: Date,Open,High,Low,Close,Volume (UTF-8, LF line endings)
-async function fetchCsv(
-  symbol: string,
-  startISO: string,
-  endISO: string,
-): Promise<{ date: string; close: number }[]> {
-  const fmt = (d: Date) =>
-    d.toISOString().slice(0, 10).replace(/-/g, "");
-  const d1 = fmt(new Date(startISO));
-  const d2 = fmt(new Date(endISO));
-  const ss = stooqOf(symbol);
-  const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(ss)}&d1=${d1}&d2=${d2}&i=d`;
-
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) {
-    throw new Error(`Stooq ${symbol} (${ss}) HTTP ${res.status}`);
-  }
-  const csv = (await res.text()).trim();
-  if (!csv || csv.toLowerCase().startsWith("no data")) {
-    throw new Error(`Stooq ${symbol} (${ss}): no data returned`);
-  }
-  const lines = csv.split(/\r?\n/);
-  if (!lines[0].startsWith("Date")) {
-    throw new Error(`Stooq ${symbol}: unexpected CSV header: ${lines[0]}`);
-  }
-  const out: { date: string; close: number }[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",");
-    if (cols.length < 5) continue;
-    const date = cols[0]; // YYYY-MM-DD
-    const close = Number(cols[4]);
-    if (date && Number.isFinite(close) && close > 0) {
-      out.push({ date, close });
-    }
-  }
-  return out;
-}
+const alpacaHeaders = () => ({
+  "APCA-API-KEY-ID": process.env.ALPACA_KEY_ID!,
+  "APCA-API-SECRET-KEY": process.env.ALPACA_SECRET_KEY!,
+});
 
 export async function getQuote(symbol: string): Promise<number> {
-  // Pull the last week of dailies and take the most recent close.
-  const end = new Date();
-  const start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const points = await fetchCsv(symbol, start.toISOString(), end.toISOString());
-  return points[points.length - 1]?.close ?? 0;
+  const url = `${ALPACA_DATA_BASE}/stocks/${symbol}/trades/latest`;
+  const res = await fetch(url, { headers: alpacaHeaders() });
+  if (!res.ok) {
+    throw new Error(`Alpaca latest trade ${symbol} HTTP ${res.status}: ${await res.text()}`);
+  }
+  const data = (await res.json()) as { trade?: { p: number } };
+  const price = data.trade?.p;
+  if (!price || price === 0) {
+    throw new Error(`Alpaca latest trade ${symbol}: zero/missing price`);
+  }
+  return price;
 }
 
 export async function getYtdReturnPct(symbol: string): Promise<number> {
-  const start = new Date(new Date().getFullYear(), 0, 1);
-  const end = new Date();
-  const points = await fetchCsv(symbol, start.toISOString(), end.toISOString());
-  if (points.length < 2) return 0;
-  const first = points[0].close;
-  const last = points[points.length - 1].close;
+  const start = new Date(new Date().getFullYear(), 0, 1).toISOString();
+  const url = `${ALPACA_DATA_BASE}/stocks/${symbol}/bars?timeframe=1Day&start=${start}&limit=500&adjustment=all`;
+  const res = await fetch(url, { headers: alpacaHeaders() });
+  if (!res.ok) {
+    throw new Error(`Alpaca bars ${symbol} HTTP ${res.status}: ${await res.text()}`);
+  }
+  const data = (await res.json()) as {
+    bars: Array<{ o: number; c: number }> | null;
+  };
+  const bars = data.bars ?? [];
+  if (bars.length < 2) return 0;
+  const first = bars[0].o;
+  const last = bars[bars.length - 1].c;
   if (!first) return 0;
   return ((last - first) / first) * 100;
 }
 
+// Historical daily bars from Alpaca, used for backfill. Paginates when
+// Alpaca's per-page limit (10000) is hit.
 export async function getDailyBars(
   symbol: string,
   startISO: string,
 ): Promise<{ date: string; close: number }[]> {
-  const end = new Date().toISOString();
-  return fetchCsv(symbol, startISO, end);
+  const out: { date: string; close: number }[] = [];
+  let pageToken: string | null = null;
+  do {
+    const tokenQs: string = pageToken ? `&page_token=${pageToken}` : "";
+    const url = `${ALPACA_DATA_BASE}/stocks/${symbol}/bars?timeframe=1Day&start=${startISO}&limit=10000&adjustment=all${tokenQs}`;
+    const res = await fetch(url, { headers: alpacaHeaders() });
+    if (!res.ok) {
+      throw new Error(`Alpaca bars ${symbol} HTTP ${res.status}: ${await res.text()}`);
+    }
+    const data = (await res.json()) as {
+      bars: Array<{ t: string; c: number }> | null;
+      next_page_token: string | null;
+    };
+    for (const b of data.bars ?? []) {
+      out.push({ date: b.t.slice(0, 10), close: b.c });
+    }
+    pageToken = data.next_page_token;
+  } while (pageToken);
+  return out;
 }
