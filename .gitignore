@@ -67,10 +67,7 @@ next-env.d.ts
 coverage/
 .cache/
 
-# local-only docs (not for public repo)
-CLAUDE.md
-DEPLOY.md
-HANDOFF.md
-APP.md
-DATA.md
-INFRA.md
+# local-only docs (not for public repo).
+# Any .md file is ignored by default; README.md is the one public exception.
+*.md
+!README.md
