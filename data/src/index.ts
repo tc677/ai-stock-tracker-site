@@ -116,15 +116,20 @@ async function maybeBackfill() {
   // Portfolio history backfill - one-time. Sets the "backfilled_history"
   // marker for backwards compatibility with old deploys.
   let portfolioStartISO: string | null = null;
-  if (!(await getMeta("backfilled_history"))) {
+  if (!(await getMeta("backfilled_history_et_dates"))) {
     console.log("starting portfolio history backfill from Alpaca...");
+    // Wipe any prior portfolio history; previous backfills used UTC dates
+    // which shifted every row one day forward (Alpaca's daily bars are
+    // stamped at midnight UTC = late-evening ET of the prior day).
+    await db.query(`DELETE FROM performance_daily WHERE symbol = 'PORTFOLIO'`);
     const history = await alpaca.portfolioHistory("5A", "1D");
     let portfolioRows = 0;
     for (let i = 0; i < history.timestamp.length; i++) {
       const equity = history.equity[i];
       if (equity == null) continue;
+      // YYYY-MM-DD in ET. en-CA gives ISO-style output.
       const date = new Date(history.timestamp[i] * 1000)
-        .toISOString()
+        .toLocaleString("en-CA", { timeZone: "America/New_York" })
         .slice(0, 10);
       await db.query(
         `INSERT INTO performance_daily (date, symbol, value)
@@ -138,8 +143,20 @@ async function maybeBackfill() {
       history.timestamp[0] != null
         ? new Date(history.timestamp[0] * 1000).toISOString()
         : null;
-    await setMeta("backfilled_history", new Date().toISOString());
-    console.log(`portfolio backfill complete: ${portfolioRows} rows`);
+    // Replace any pre-funding $0 rows with STARTING_EQUITY so the chart
+    // baseline reflects the actual starting cash, not Alpaca's "account
+    // didn't exist yet" sentinel.
+    const startingEquity = Number(process.env.STARTING_EQUITY ?? 10000);
+    const { rowCount } = await db.query(
+      `UPDATE performance_daily
+          SET value = $1
+        WHERE symbol = 'PORTFOLIO' AND value = 0`,
+      [startingEquity],
+    );
+    await setMeta("backfilled_history_et_dates", new Date().toISOString());
+    console.log(
+      `portfolio backfill complete: ${portfolioRows} rows (${rowCount ?? 0} pre-funding $0 → $${startingEquity})`,
+    );
   }
 
   // Per-benchmark backfill - each benchmark gets its own marker, so when
@@ -288,7 +305,10 @@ async function pull() {
   // Both write-paths in parallel: daily (one row per day, upserted) +
   // intraday (one row per minute, append-only).
   const now = new Date();
-  const today = now.toISOString().slice(0, 10);
+  // Use ET for the daily-bucket key so it matches the backfill and the UI.
+  const today = now
+    .toLocaleString("en-CA", { timeZone: "America/New_York" })
+    .slice(0, 10);
   await Promise.all([
     upsertDailyValue(today, "PORTFOLIO", portfolioValue),
     insertIntradayValue(now, "PORTFOLIO", portfolioValue),
