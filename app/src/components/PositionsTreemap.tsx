@@ -115,7 +115,7 @@ function Tile(props: TileProps) {
           dominantBaseline="middle"
           fill="#ffffff"
           fontSize={symbolSize}
-          fontWeight={900}
+          fontWeight={400}
         >
           {name}
         </text>
@@ -128,7 +128,7 @@ function Tile(props: TileProps) {
           dominantBaseline="middle"
           fill="#ffffff"
           fontSize={pctSize}
-          fontWeight={800}
+          fontWeight={400}
         >
           {pct >= 0 ? "+" : ""}
           {fmtPct(pct)}
