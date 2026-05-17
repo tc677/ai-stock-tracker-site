@@ -29,7 +29,6 @@ export default async function Home() {
     );
   }
 
-  // Compute portfolio % change since first trade for the hero color/label.
   const portfolioSince = sinceSeries.find((s) => s.symbol === "PORTFOLIO");
   const sincePct = (() => {
     if (!portfolioSince || portfolioSince.points.length < 2) return null;
@@ -64,13 +63,21 @@ export default async function Home() {
             </span>
           )}
         </div>
-        <div className="mt-2 text-sm text-zinc-500 tabular-nums">
-          Cash: {fmtUSD(summary.cash)}
+        <div className="mt-3 text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
+          <span className="text-sm font-normal text-zinc-500 mr-2">Cash</span>
+          {fmtUSD(summary.cash)}
         </div>
       </section>
 
       {/* Benchmark comparison since first trade */}
-      <ComparisonCards series={sinceSeries} />
+      {inceptionDate && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-zinc-500">
+            Since {fmtDate(inceptionDate)}
+          </h2>
+          <ComparisonCards series={sinceSeries} />
+        </section>
+      )}
 
       {/* Footer */}
       <section className="border-t border-zinc-200 dark:border-zinc-800 pt-4 text-sm text-zinc-500 text-right">

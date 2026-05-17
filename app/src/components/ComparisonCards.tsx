@@ -48,21 +48,23 @@ function Card({
 
   return (
     <div
-      className={`rounded-lg border p-4 ${
+      className={`rounded-md border p-2.5 ${
         emphasis
           ? "border-zinc-300 dark:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/40"
           : "border-zinc-200 dark:border-zinc-800"
       }`}
     >
-      <div className="text-xs uppercase tracking-wide text-zinc-500 truncate">
+      <div className="text-[11px] uppercase tracking-wide text-zinc-500 truncate">
         {label}
       </div>
-      <div className={`mt-2 text-xl font-semibold tabular-nums ${color}`}>
+      <div className={`mt-1 text-base font-semibold tabular-nums ${color}`}>
         {positive ? "+" : ""}
         {fmtPct(pct)}
       </div>
       {symbol && (
-        <div className="mt-1 text-xs text-zinc-500 tabular-nums">{symbol}</div>
+        <div className="mt-0.5 text-[11px] text-zinc-500 tabular-nums">
+          {symbol}
+        </div>
       )}
     </div>
   );

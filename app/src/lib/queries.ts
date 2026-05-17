@@ -105,10 +105,17 @@ export async function getActivity(limit = 50): Promise<Activity[]> {
 
 import { isIntraday, rangeSinceClause, type Range } from "./ranges";
 
-// Earliest filled_at date in activity, as 'YYYY-MM-DD'. Null if no trades.
+// Returns the day BEFORE the earliest trade, in Eastern Time. That gives the
+// chart and comparison cards an "all cash" baseline to grow from, so the
+// percentage change reflects the actual trading result rather than starting
+// at the post-first-trade equity.
 export async function getInceptionDate(): Promise<string | null> {
   const { rows } = await db.query<{ date: string | null }>(
-    `SELECT (MIN(filled_at))::date::text AS date FROM activity`,
+    `SELECT (
+       (MIN(filled_at) AT TIME ZONE 'America/New_York')::date
+       - INTERVAL '1 day'
+     )::text AS date
+     FROM activity`,
   );
   return rows[0]?.date ?? null;
 }
