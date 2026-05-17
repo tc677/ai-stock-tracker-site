@@ -32,7 +32,7 @@ export function PositionsTreemap({ positions }: { positions: Position[] }) {
           data={data}
           dataKey="size"
           nameKey="name"
-          stroke="none"
+          stroke="#18181b"
           isAnimationActive={false}
           content={<Tile />}
         >
@@ -43,13 +43,17 @@ export function PositionsTreemap({ positions }: { positions: Position[] }) {
   );
 }
 
-// Smooth color gradient: dark rose at -CAP%, light gray at 0%, dark
-// emerald at +CAP%. Values outside ±CAP saturate at the endpoint colors.
-// Lighter middle, darker extremes so the eye is drawn to big movers.
+// 5-stop finviz-style palette: strong red → soft pink → gray → light
+// chartreuse → forest green. Piecewise lerp through the stops so big
+// movers go dark and near-zero positions stay muted.
 const CAP_PCT = 10;
-const LOSS = [159, 18, 57];    // rose-800
-const FLAT = [212, 212, 216];  // zinc-300
-const GAIN = [4, 120, 87];     // emerald-700
+const STOPS: { t: number; rgb: [number, number, number] }[] = [
+  { t: -1.0, rgb: [196, 50, 50] },    // strong red at -CAP
+  { t: -0.5, rgb: [243, 165, 165] },  // soft pink mid-loss
+  { t: 0.0, rgb: [140, 140, 140] },   // neutral gray
+  { t: 0.5, rgb: [170, 207, 105] },   // chartreuse mid-gain
+  { t: 1.0, rgb: [80, 138, 35] },     // forest green at +CAP
+];
 
 function lerp(a: number, b: number, t: number): number {
   return Math.round(a + (b - a) * t);
@@ -57,11 +61,21 @@ function lerp(a: number, b: number, t: number): number {
 
 export function fillFor(pct: number): string {
   const clamped = Math.max(-CAP_PCT, Math.min(CAP_PCT, pct));
-  const t = Math.abs(clamped) / CAP_PCT;
-  const target = clamped >= 0 ? GAIN : LOSS;
-  const r = lerp(FLAT[0], target[0], t);
-  const g = lerp(FLAT[1], target[1], t);
-  const b = lerp(FLAT[2], target[2], t);
+  const t = clamped / CAP_PCT;
+  let lo = STOPS[0];
+  let hi = STOPS[STOPS.length - 1];
+  for (let i = 0; i < STOPS.length - 1; i++) {
+    if (t >= STOPS[i].t && t <= STOPS[i + 1].t) {
+      lo = STOPS[i];
+      hi = STOPS[i + 1];
+      break;
+    }
+  }
+  const span = hi.t - lo.t;
+  const local = span === 0 ? 0 : (t - lo.t) / span;
+  const r = lerp(lo.rgb[0], hi.rgb[0], local);
+  const g = lerp(lo.rgb[1], hi.rgb[1], local);
+  const b = lerp(lo.rgb[2], hi.rgb[2], local);
   return `rgb(${r}, ${g}, ${b})`;
 }
 
@@ -75,27 +89,14 @@ type TileProps = {
   plPct?: number;
 };
 
-// Pick black or white for the label based on the tile's perceived luminance.
-// Uses Rec. 709 weights; threshold ~150 reads well on this palette.
-function textColorFor(fill: string): string {
-  const m = fill.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-  if (!m) return "#fafafa";
-  const r = Number(m[1]);
-  const g = Number(m[2]);
-  const b = Number(m[3]);
-  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return lum > 150 ? "#000000" : "#ffffff";
-}
-
 function Tile(props: TileProps) {
   const { x = 0, y = 0, width = 0, height = 0, name = "", payload } = props;
   const pct = payload?.plPct ?? props.plPct ?? 0;
   const fill = fillFor(pct);
-  const textColor = textColorFor(fill);
   const showLabel = width > 36 && height > 24;
   const showPct = width > 60 && height > 44;
   const symbolSize = Math.min(28, Math.max(13, Math.min(width, height) / 3.5));
-  const pctSize = Math.min(16, Math.max(11, symbolSize * 0.6));
+  const pctSize = Math.min(16, Math.max(11, symbolSize * 0.55));
 
   return (
     <g>
@@ -104,7 +105,7 @@ function Tile(props: TileProps) {
         y={y}
         width={width}
         height={height}
-        style={{ fill, stroke: "none" }}
+        style={{ fill, stroke: "#18181b", strokeWidth: 2 }}
       />
       {showLabel && (
         <text
@@ -112,9 +113,9 @@ function Tile(props: TileProps) {
           y={y + height / 2 - (showPct ? symbolSize * 0.4 : 0)}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill={textColor}
+          fill="#ffffff"
           fontSize={symbolSize}
-          fontWeight={800}
+          fontWeight={700}
         >
           {name}
         </text>
@@ -122,12 +123,13 @@ function Tile(props: TileProps) {
       {showPct && (
         <text
           x={x + width / 2}
-          y={y + height / 2 + symbolSize * 0.55}
+          y={y + height / 2 + symbolSize * 0.6}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill={textColor}
+          fill="#ffffff"
+          opacity={0.85}
           fontSize={pctSize}
-          fontWeight={700}
+          fontWeight={500}
         >
           {pct >= 0 ? "+" : ""}
           {fmtPct(pct)}
