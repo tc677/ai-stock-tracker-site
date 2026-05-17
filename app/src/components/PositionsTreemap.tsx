@@ -12,9 +12,16 @@ type TileDatum = {
   qty: number;
   current: number;
   marketValue: number;
+  isCash?: boolean;
 };
 
-export function PositionsTreemap({ positions }: { positions: Position[] }) {
+export function PositionsTreemap({
+  positions,
+  cash,
+}: {
+  positions: Position[];
+  cash?: number;
+}) {
   const data: TileDatum[] = positions.map((p) => ({
     name: p.symbol,
     size: Math.max(Math.abs(Number(p.market_value)), 1),
@@ -25,8 +32,21 @@ export function PositionsTreemap({ positions }: { positions: Position[] }) {
     marketValue: Number(p.market_value),
   }));
 
+  if (cash != null && cash > 0) {
+    data.push({
+      name: "Cash",
+      size: Math.max(cash, 1),
+      pl: 0,
+      plPct: 0,
+      qty: 0,
+      current: 0,
+      marketValue: cash,
+      isCash: true,
+    });
+  }
+
   return (
-    <div className="h-[18rem] sm:h-[22rem]">
+    <div className="h-[26rem] sm:h-[32rem]">
       <ResponsiveContainer width="100%" height="100%">
         <Treemap
           data={data}
@@ -103,10 +123,11 @@ function textColorFor(fill: string): string {
 function Tile(props: TileProps) {
   const { x = 0, y = 0, width = 0, height = 0, name = "", payload } = props;
   const pct = payload?.plPct ?? props.plPct ?? 0;
+  const isCash = payload?.isCash === true;
   const fill = fillFor(pct);
   const textColor = textColorFor(fill);
   const showLabel = width > 36 && height > 24;
-  const showPct = width > 60 && height > 44;
+  const showPct = !isCash && width > 60 && height > 44;
   const symbolSize = Math.min(40, Math.max(16, Math.min(width, height) / 2.8));
   const pctSize = Math.min(22, Math.max(13, symbolSize * 0.6));
 
@@ -167,10 +188,12 @@ function TileTooltip({
       <div className="mt-0.5 tabular-nums text-zinc-200">
         {fmtUSD(Math.abs(d.marketValue))}
       </div>
-      <div className={`tabular-nums ${pctColor}`}>
-        {positive ? "+" : ""}
-        {fmtPct(d.plPct)}
-      </div>
+      {!d.isCash && (
+        <div className={`tabular-nums ${pctColor}`}>
+          {positive ? "+" : ""}
+          {fmtPct(d.plPct)}
+        </div>
+      )}
     </div>
   );
 }

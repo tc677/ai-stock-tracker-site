@@ -103,7 +103,7 @@ export default async function Home() {
           <p className="text-sm text-zinc-500">
             Tile size = position value. Color = unrealized P/L %.
           </p>
-          <PositionsTreemap positions={positions} />
+          <PositionsTreemap positions={positions} cash={Number(summary.cash)} />
           <div className="flex items-center gap-3 text-xs text-zinc-500">
             <span>≤ -10%</span>
             <span
@@ -173,12 +173,12 @@ export default async function Home() {
 
   return (
     <div className="space-y-12">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-40 gap-y-32">
-        <div className="space-y-64">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-40 gap-y-48">
+        <div className="space-y-96">
           {heroBlock}
           {positionsBlock}
         </div>
-        <div className="space-y-64 lg:mt-64">
+        <div className="space-y-96 lg:mt-96">
           {performanceBlock}
           {activityBlock}
         </div>

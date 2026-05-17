@@ -35,7 +35,7 @@ export function EquityChart({ series }: { series: PerformanceSeries[] }) {
 
   if (!enough) {
     return (
-      <div className="h-64 sm:h-80 flex items-center justify-center rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-500 text-sm">
+      <div className="h-80 sm:h-[28rem] flex items-center justify-center rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-500 text-sm">
         Not enough history yet.
       </div>
     );
@@ -73,7 +73,7 @@ export function EquityChart({ series }: { series: PerformanceSeries[] }) {
 
   return (
     <div>
-      <div className="h-64 sm:h-80">
+      <div className="h-80 sm:h-[28rem]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid

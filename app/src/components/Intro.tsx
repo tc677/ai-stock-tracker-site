@@ -33,9 +33,9 @@ const SCRAMBLE_CHARS =
 const SCRAMBLE_TICK = 40;
 const REVEAL_DELAY_PER_CHAR = 110;
 const HOLD_AFTER_DECRYPT = 700;
-const PLOP_DURATION = 600;
-const HOLD_AFTER_PLOP = 500;
 const ZOOM_DURATION = 1300;
+const HOLD_AFTER_ZOOM = 250;
+const PLOP_DURATION = 600;
 const ZOOM_SCALE = 6;
 
 function randomChar() {
@@ -83,38 +83,37 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
       );
     }
 
-    let plopTimer: ReturnType<typeof setTimeout> | null = null;
+    let zoomTimer: ReturnType<typeof setTimeout> | null = null;
     const finish = setTimeout(() => {
       clearInterval(tick);
       setDisplay(TARGET);
-      plopTimer = setTimeout(() => setPhase("plop"), HOLD_AFTER_DECRYPT);
+      zoomTimer = setTimeout(() => setPhase("zoom"), HOLD_AFTER_DECRYPT);
     }, total + 60);
 
     return () => {
       clearInterval(tick);
       lockTimers.forEach(clearTimeout);
       clearTimeout(finish);
-      if (plopTimer) clearTimeout(plopTimer);
+      if (zoomTimer) clearTimeout(zoomTimer);
     };
   }, [phase]);
 
-  // plop -> zoom -> done
+  // zoom -> plop -> done
   useEffect(() => {
-    if (phase === "plop") {
+    if (phase === "zoom") {
       const t = setTimeout(
-        () => setPhase("zoom"),
-        PLOP_DURATION + HOLD_AFTER_PLOP,
+        () => setPhase("plop"),
+        ZOOM_DURATION + HOLD_AFTER_ZOOM,
       );
       return () => clearTimeout(t);
     }
-    if (phase === "zoom") {
-      const t = setTimeout(() => setPhase("done"), ZOOM_DURATION);
+    if (phase === "plop") {
+      const t = setTimeout(() => setPhase("done"), PLOP_DURATION);
       return () => clearTimeout(t);
     }
   }, [phase]);
 
-  const inIntro =
-    phase === "decrypt" || phase === "plop" || phase === "zoom";
+  const inWrapperScale = phase === "decrypt" || phase === "zoom";
   const zooming = phase === "zoom";
 
   // Lock body scroll + paint black backdrop while we're zoomed in.
@@ -122,23 +121,23 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
   // color in sync with the scale animation so the page becomes visible
   // as part of the same step-back motion (no separate fade).
   useEffect(() => {
-    if (!inIntro) {
+    if (!inWrapperScale) {
       document.body.style.overflow = "";
       document.body.style.backgroundColor = "";
       document.body.style.transition = "";
       return;
     }
     document.body.style.overflow = "hidden";
-    if (phase === "decrypt" || phase === "plop") {
+    if (phase === "decrypt") {
       document.body.style.transition = "";
       document.body.style.backgroundColor = "#000";
     } else if (phase === "zoom") {
       document.body.style.transition = `background-color ${ZOOM_DURATION}ms ease-out`;
       document.body.style.backgroundColor = "";
     }
-  }, [inIntro, phase]);
+  }, [inWrapperScale, phase]);
 
-  const wrapperStyle: CSSProperties = inIntro
+  const wrapperStyle: CSSProperties = inWrapperScale
     ? {
         transform: zooming ? "scale(1)" : `scale(${ZOOM_SCALE})`,
         transformOrigin: "50% 0",
@@ -149,15 +148,15 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
       }
     : {};
 
+  // Emoji hides during the giant-scaled decrypt and during the zoom
+  // shrink. It first appears in the "plop" phase, bouncing into the
+  // already-normal-sized nav title.
   const showEmoji =
-    phase === "plop" ||
-    phase === "zoom" ||
-    phase === "done" ||
-    phase === "idle";
+    phase === "plop" || phase === "done" || phase === "idle";
 
   const ctxValue: IntroState = {
     phase,
-    display: inIntro ? display : "CanMyAITrade",
+    display: phase === "decrypt" ? display : "CanMyAITrade",
     showEmoji,
   };
 
