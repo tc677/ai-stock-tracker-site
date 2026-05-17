@@ -105,6 +105,52 @@ export async function getActivity(limit = 50): Promise<Activity[]> {
 
 import { isIntraday, rangeSinceClause, type Range } from "./ranges";
 
+// Earliest filled_at date in activity, as 'YYYY-MM-DD'. Null if no trades.
+export async function getInceptionDate(): Promise<string | null> {
+  const { rows } = await db.query<{ date: string | null }>(
+    `SELECT (MIN(filled_at))::date::text AS date FROM activity`,
+  );
+  return rows[0]?.date ?? null;
+}
+
+// Daily performance series from a specific start date onward. Used for the
+// "since first trade" comparison view.
+export async function getPerformanceSeriesSince(
+  startDate: string,
+): Promise<PerformanceSeries[]> {
+  const { rows } = await db.query<{
+    symbol: string;
+    label: string;
+    t: string;
+    value: number;
+  }>(
+    `SELECT p.symbol,
+            COALESCE(b.label, 'Portfolio') AS label,
+            p.date::text AS t,
+            p.value
+       FROM performance_daily p
+       LEFT JOIN benchmarks b ON b.symbol = p.symbol
+       WHERE p.date >= $1::date
+       ORDER BY p.symbol, p.date ASC`,
+    [startDate],
+  );
+
+  const bySymbol = new Map<string, PerformanceSeries>();
+  for (const r of rows) {
+    let s = bySymbol.get(r.symbol);
+    if (!s) {
+      s = { symbol: r.symbol, label: r.label, points: [] };
+      bySymbol.set(r.symbol, s);
+    }
+    s.points.push({ t: r.t, value: Number(r.value) });
+  }
+  return [...bySymbol.values()].sort((a, b) => {
+    if (a.symbol === "PORTFOLIO") return -1;
+    if (b.symbol === "PORTFOLIO") return 1;
+    return a.symbol.localeCompare(b.symbol);
+  });
+}
+
 export async function getPerformanceSeries(
   range: Range = "YTD",
 ): Promise<PerformanceSeries[]> {

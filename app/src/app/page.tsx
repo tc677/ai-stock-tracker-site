@@ -1,13 +1,24 @@
-import { getBenchmarks, getSummary } from "@/lib/queries";
-import { fmtDateTime, fmtPct, fmtUSD } from "@/lib/format";
+import { ComparisonSection } from "@/components/ComparisonSection";
+import {
+  getInceptionDate,
+  getPerformanceSeries,
+  getPerformanceSeriesSince,
+  getSummary,
+} from "@/lib/queries";
+import { fmtDate, fmtDateTime, fmtPct, fmtUSD } from "@/lib/format";
 
 export const revalidate = 10;
 
 export default async function Home() {
-  const [summary, benchmarks] = await Promise.all([
+  const [summary, ytdSeries, inceptionDate] = await Promise.all([
     getSummary().catch(() => null),
-    getBenchmarks().catch(() => []),
+    getPerformanceSeries("YTD").catch(() => []),
+    getInceptionDate().catch(() => null),
   ]);
+
+  const sinceSeries = inceptionDate
+    ? await getPerformanceSeriesSince(inceptionDate).catch(() => [])
+    : [];
 
   if (!summary) {
     return (
@@ -27,7 +38,7 @@ export default async function Home() {
 
   return (
     <div className="space-y-10">
-      {/* Hero: big YTD return + portfolio value */}
+      {/* Hero */}
       <section>
         <div className="text-sm font-medium text-zinc-500 mb-1">
           Portfolio value
@@ -44,42 +55,13 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Benchmark comparison */}
-      {benchmarks.length > 0 && (
-        <section>
-          <h2 className="text-sm font-medium text-zinc-500 mb-3">
-            vs. Benchmarks (YTD)
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {benchmarks.map((b) => {
-              const diff = summary.ytd_return_pct - b.ytd_pct;
-              const positive = diff >= 0;
-              const color = positive
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-rose-600 dark:text-rose-400";
-              return (
-                <div
-                  key={b.symbol}
-                  className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4"
-                >
-                  <div className="text-xs uppercase tracking-wide text-zinc-500">
-                    {b.label}
-                  </div>
-                  <div className={`mt-2 text-xl font-semibold tabular-nums ${color}`}>
-                    {positive ? "+" : ""}
-                    {fmtPct(diff)}
-                  </div>
-                  <div className="mt-1 text-xs text-zinc-500 tabular-nums">
-                    {b.symbol}: {fmtPct(b.ytd_pct)}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      <ComparisonSection
+        ytdSeries={ytdSeries}
+        sinceSeries={sinceSeries}
+        sinceLabel={inceptionDate ? fmtDate(inceptionDate) : "first trade"}
+      />
 
-      {/* Cash + small stats strip */}
+      {/* Cash + last updated */}
       <section className="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 pt-4 text-sm text-zinc-500">
         <span>Cash: {fmtUSD(summary.cash)}</span>
         <span>Updated {fmtDateTime(summary.updated_at)}</span>

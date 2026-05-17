@@ -1,22 +1,38 @@
 import type { Metadata } from "next";
-import { EquityChart } from "@/components/EquityChart";
-import { getPerformanceSeries } from "@/lib/queries";
+import { ChartSection } from "@/components/ChartSection";
+import {
+  getInceptionDate,
+  getPerformanceSeries,
+  getPerformanceSeriesSince,
+} from "@/lib/queries";
 import { fmtDate, fmtPct } from "@/lib/format";
 
 export const revalidate = 10;
 export const metadata: Metadata = { title: "Performance" };
 
 export default async function PerformancePage() {
-  const series = await getPerformanceSeries("YTD").catch(() => []);
-  const enough = series.some((s) => s.points.length >= 2);
+  const [ytdSeries, inceptionDate] = await Promise.all([
+    getPerformanceSeries("YTD").catch(() => []),
+    getInceptionDate().catch(() => null),
+  ]);
+
+  const sinceSeries = inceptionDate
+    ? await getPerformanceSeriesSince(inceptionDate).catch(() => [])
+    : [];
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-semibold tracking-tight">Performance (YTD)</h1>
+    <div className="space-y-10">
+      <h1 className="text-3xl font-semibold tracking-tight">Performance</h1>
 
-      <EquityChart series={series} />
+      <ChartSection
+        ytdSeries={ytdSeries}
+        sinceSeries={sinceSeries}
+        sinceLabel={inceptionDate ? fmtDate(inceptionDate) : "first trade"}
+      />
 
-      {enough && <PerformanceTable series={series} />}
+      {ytdSeries.some((s) => s.points.length >= 2) && (
+        <PerformanceTable series={ytdSeries} />
+      )}
     </div>
   );
 }
