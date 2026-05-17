@@ -16,7 +16,7 @@ export function Nav() {
           : "border-zinc-200 dark:border-zinc-800"
       }`}
     >
-      <nav className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-center">
+      <nav className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-center">
         <Link
           href="/"
           className="font-semibold tracking-tight text-lg flex items-baseline gap-2"

@@ -107,6 +107,7 @@ type TileProps = {
   name?: string;
   payload?: TileDatum;
   plPct?: number;
+  isCash?: boolean;
 };
 
 // Black or white based on tile luminance (Rec. 709 weights).
@@ -123,7 +124,9 @@ function textColorFor(fill: string): string {
 function Tile(props: TileProps) {
   const { x = 0, y = 0, width = 0, height = 0, name = "", payload } = props;
   const pct = payload?.plPct ?? props.plPct ?? 0;
-  const isCash = payload?.isCash === true;
+  // Recharts sometimes passes datum fields as direct props rather
+  // than nested under `payload`, so check both shapes.
+  const isCash = payload?.isCash === true || props.isCash === true;
   const fill = fillFor(pct);
   const textColor = textColorFor(fill);
   const showLabel = width > 36 && height > 24;

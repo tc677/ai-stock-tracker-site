@@ -2,43 +2,40 @@
 
 import { useIntro } from "./Intro";
 
-// A subtle decorative layer of stock-chart arrows tiled across the
-// viewport. Once the intro hands off to the visible page, each arrow's
-// line draws itself across its tile (like the equity chart's line
-// animation) and its arrowhead pops in at the end. After that, the
-// whole layer pulses every ~10 s.
+// Three full-width chart-like lines that span the screen left-to-right,
+// drawn in once the intro hands off to the visible page. Color and
+// vertical direction follow the portfolio trend: rising emerald lines
+// when up, falling rose lines when down. After draw-in each line
+// settles into a staggered marketPulse every ~10 s.
 
+// 200 x 100 viewBox so the polyline has room for some detail across
+// the full width without distorting at high aspect ratios.
 const PATH_UP =
-  "M 5 92 L 16 80 L 24 84 L 36 66 L 48 73 L 60 52 L 72 60 L 84 35 L 95 18";
-const ARROWHEAD_UP = "95,18 84,21 88,12";
-
+  "M 0 88 L 12 84 L 24 86 L 36 78 L 48 80 L 60 70 L 72 74 L 84 64 L 96 68 L 108 56 L 120 60 L 132 48 L 144 52 L 156 38 L 168 42 L 180 28 L 192 22 L 200 18";
 const PATH_DOWN =
-  "M 5 8 L 16 20 L 24 16 L 36 34 L 48 27 L 60 48 L 72 40 L 84 65 L 95 82";
-const ARROWHEAD_DOWN = "95,82 84,79 88,88";
+  "M 0 12 L 12 16 L 24 14 L 36 22 L 48 20 L 60 30 L 72 26 L 84 36 L 96 32 L 108 44 L 120 40 L 132 52 L 144 48 L 156 62 L 168 58 L 180 72 L 192 78 L 200 82";
 
-const DRAW_DURATION = 1400;
+const DRAW_DURATION = 1800;
 
-function ArrowSvg({
+function LineSvg({
   up,
-  style,
+  top,
   delay,
 }: {
   up: boolean;
-  style?: React.CSSProperties;
+  top: string;
   delay: number;
 }) {
-  // Per-element timing: line draws first, arrowhead pops in as the line
-  // nears completion, pulse takes over once both are settled.
-  const arrowheadDelay = delay + Math.round(DRAW_DURATION * 0.7);
   const pulseDelay = delay + DRAW_DURATION + 200;
 
   return (
     <svg
-      viewBox="0 0 100 100"
+      viewBox="0 0 200 100"
       preserveAspectRatio="none"
-      className="absolute"
+      className="absolute left-0 w-screen"
       style={{
-        ...style,
+        top,
+        height: "22vh",
         color: up ? "rgb(74, 222, 128)" : "rgb(248, 113, 113)",
         opacity: 0.07,
         animation: `marketPulse 10s ease-in-out ${pulseDelay}ms infinite`,
@@ -47,25 +44,16 @@ function ArrowSvg({
       <path
         d={up ? PATH_UP : PATH_DOWN}
         stroke="currentColor"
-        strokeWidth={1.8}
+        strokeWidth={0.6}
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
         style={{
-          strokeDasharray: 320,
-          strokeDashoffset: 320,
+          strokeDasharray: 420,
+          strokeDashoffset: 420,
           animation: `arrowDraw ${DRAW_DURATION}ms ease-out ${delay}ms forwards`,
         }}
-      />
-      <polygon
-        points={up ? ARROWHEAD_UP : ARROWHEAD_DOWN}
-        fill="currentColor"
-        style={{
-          opacity: 0,
-          transformBox: "fill-box",
-          transformOrigin: "center",
-          animation: `arrowheadAppear 600ms cubic-bezier(0.34, 1.56, 0.64, 1) ${arrowheadDelay}ms forwards`,
-        }}
+        vectorEffect="non-scaling-stroke"
       />
     </svg>
   );
@@ -75,21 +63,13 @@ export function MarketBackdrop({ up }: { up: boolean }) {
   const { phase } = useIntro();
   const revealed = phase === "plop" || phase === "done";
 
-  // 5 columns × 4 rows, every other row offset so they don't line up
-  // too rigidly. Per-tile draw delay rolls diagonally across the page.
-  const tiles: { left: number; top: number; delay: number }[] = [];
-  const cols = 5;
-  const rows = 4;
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const offset = r % 2 === 1 ? 10 : 0;
-      tiles.push({
-        left: (c * 100) / cols + offset,
-        top: (r * 100) / rows,
-        delay: (r + c) * 110,
-      });
-    }
-  }
+  // Three lines: upper, middle, lower thirds. Stagger draw delays so
+  // they sweep in one after another rather than all at once.
+  const lines = [
+    { top: "12%", delay: 0 },
+    { top: "42%", delay: 350 },
+    { top: "72%", delay: 700 },
+  ];
 
   return (
     <div
@@ -97,18 +77,8 @@ export function MarketBackdrop({ up }: { up: boolean }) {
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
     >
       {revealed &&
-        tiles.map((t, i) => (
-          <ArrowSvg
-            key={i}
-            up={up}
-            delay={t.delay}
-            style={{
-              left: `${t.left}%`,
-              top: `${t.top}%`,
-              width: "20%",
-              height: "20%",
-            }}
-          />
+        lines.map((l, i) => (
+          <LineSvg key={i} up={up} top={l.top} delay={l.delay} />
         ))}
     </div>
   );

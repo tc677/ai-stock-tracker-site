@@ -37,7 +37,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-white dark:bg-black text-zinc-900 dark:text-zinc-100">
         <IntroProvider>
           <Nav />
-          <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8">{children}</main>
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8">{children}</main>
           <footer className="border-t border-zinc-200 dark:border-zinc-800 py-4 text-center text-xs text-zinc-500">
             <span id="footer-timestamp-slot" /> For informational use only, not
             investment advice.

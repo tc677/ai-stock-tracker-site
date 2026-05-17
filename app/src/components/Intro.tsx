@@ -61,7 +61,10 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
     if (titleEl) {
       const rect = titleEl.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
+      // Anchor at the title's top edge, not its center, so the
+      // scaled-up title extends *downward* from its natural y and
+      // never gets clipped at the top of the viewport.
+      const cy = rect.top;
       setOrigin(`${cx}px ${cy}px`);
     }
 
@@ -138,9 +141,11 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
       document.body.style.overflow = "";
       document.body.style.backgroundColor = "";
       document.body.style.transition = "";
+      document.body.removeAttribute("data-intro");
       return;
     }
     document.body.style.overflow = "hidden";
+    document.body.setAttribute("data-intro", phase);
     if (phase === "decrypt") {
       document.body.style.transition = "";
       document.body.style.backgroundColor = "#000";
