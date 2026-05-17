@@ -13,7 +13,18 @@ import type { PerformanceSeries } from "@/lib/types";
 import { fmtDate, fmtPct } from "@/lib/format";
 
 const PORTFOLIO_COLOR = "#10b981"; // emerald-500
-const BENCHMARK_COLORS = ["#64748b", "#3b82f6", "#a855f7", "#f59e0b", "#ec4899"];
+// Specific colors per known benchmark; fallback palette for anything else.
+const BENCHMARK_COLOR_MAP: Record<string, string> = {
+  SPY: "#ef4444", // red - S&P 500
+  QQQ: "#06b6d4", // cyan/aqua - Nasdaq-100
+  IWB: "#a855f7", // purple - Russell 1000
+  IWM: "#f59e0b", // amber - Russell 2000
+};
+const FALLBACK_COLORS = ["#64748b", "#3b82f6", "#a855f7", "#f59e0b", "#ec4899"];
+
+function colorFor(symbol: string, fallbackIndex: number): string {
+  return BENCHMARK_COLOR_MAP[symbol] ?? FALLBACK_COLORS[fallbackIndex % FALLBACK_COLORS.length];
+}
 
 type Row = {
   t: string;
@@ -109,7 +120,7 @@ export function EquityChart({ series }: { series: PerformanceSeries[] }) {
                 key={s.symbol}
                 type="monotone"
                 dataKey={s.symbol}
-                stroke={BENCHMARK_COLORS[i % BENCHMARK_COLORS.length]}
+                stroke={colorFor(s.symbol, i)}
                 strokeWidth={1.5}
                 strokeDasharray="4 4"
                 dot={false}
@@ -137,7 +148,7 @@ export function EquityChart({ series }: { series: PerformanceSeries[] }) {
         {benchmarks.map((s, i) => (
           <LegendDot
             key={s.symbol}
-            color={BENCHMARK_COLORS[i % BENCHMARK_COLORS.length]}
+            color={colorFor(s.symbol, i)}
             label={`${s.label} (${s.symbol})`}
             dashed
           />

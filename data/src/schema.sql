@@ -47,10 +47,12 @@ CREATE TABLE IF NOT EXISTS benchmarks (
   sort_order  INT  NOT NULL DEFAULT 100
 );
 
--- Seed two starter benchmarks. Add more by inserting a row — no code change.
+-- Seed starter benchmarks. Add more by inserting a row - no code change.
 INSERT INTO benchmarks (symbol, label, kind, sort_order) VALUES
-  ('SPY', 'S&P 500',    'etf', 10),
-  ('QQQ', 'Nasdaq-100', 'etf', 20)
+  ('SPY', 'S&P 500',      'etf', 10),
+  ('QQQ', 'Nasdaq-100',   'etf', 20),
+  ('IWB', 'Russell 1000', 'etf', 30),
+  ('IWM', 'Russell 2000', 'etf', 40)
 ON CONFLICT (symbol) DO NOTHING;
 
 -- Latest snapshot per benchmark, upserted each puller run.

@@ -1,7 +1,6 @@
-import { ComparisonSection } from "@/components/ComparisonSection";
+import { ComparisonCards } from "@/components/ComparisonCards";
 import {
   getInceptionDate,
-  getPerformanceSeries,
   getPerformanceSeriesSince,
   getSummary,
 } from "@/lib/queries";
@@ -10,9 +9,8 @@ import { fmtDate, fmtDateTime, fmtPct, fmtUSD } from "@/lib/format";
 export const revalidate = 10;
 
 export default async function Home() {
-  const [summary, ytdSeries, inceptionDate] = await Promise.all([
+  const [summary, inceptionDate] = await Promise.all([
     getSummary().catch(() => null),
-    getPerformanceSeries("YTD").catch(() => []),
     getInceptionDate().catch(() => null),
   ]);
 
@@ -31,8 +29,17 @@ export default async function Home() {
     );
   }
 
-  const ytdPositive = summary.ytd_return_pct >= 0;
-  const ytdColor = ytdPositive
+  // Compute portfolio % change since first trade for the hero color/label.
+  const portfolioSince = sinceSeries.find((s) => s.symbol === "PORTFOLIO");
+  const sincePct = (() => {
+    if (!portfolioSince || portfolioSince.points.length < 2) return null;
+    const first = Number(portfolioSince.points[0].value);
+    const last = Number(portfolioSince.points[portfolioSince.points.length - 1].value);
+    return first ? ((last - first) / first) * 100 : 0;
+  })();
+
+  const positive = sincePct == null ? true : sincePct >= 0;
+  const heroColor = positive
     ? "text-emerald-600 dark:text-emerald-400"
     : "text-rose-600 dark:text-rose-400";
 
@@ -43,28 +50,31 @@ export default async function Home() {
         <div className="text-sm font-medium text-zinc-500 mb-1">
           Portfolio value
         </div>
-        <div className="text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums">
-          {fmtUSD(summary.portfolio_value)}
-        </div>
-        <div className={`mt-2 text-xl font-medium tabular-nums ${ytdColor}`}>
-          {ytdPositive ? "+" : ""}
-          {fmtUSD(summary.ytd_return_dollar)} ({fmtPct(summary.ytd_return_pct)})
-          <span className="text-sm font-normal text-zinc-500 ml-2">
-            year to date
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <span className={`text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums ${heroColor}`}>
+            {fmtUSD(summary.portfolio_value)}
           </span>
+          {sincePct != null && inceptionDate && (
+            <span className={`text-lg font-medium tabular-nums ${heroColor}`}>
+              {positive ? "+" : ""}
+              {fmtPct(sincePct)}
+              <span className="text-sm font-normal text-zinc-500 ml-1">
+                since {fmtDate(inceptionDate)}
+              </span>
+            </span>
+          )}
+        </div>
+        <div className="mt-2 text-sm text-zinc-500 tabular-nums">
+          Cash: {fmtUSD(summary.cash)}
         </div>
       </section>
 
-      <ComparisonSection
-        ytdSeries={ytdSeries}
-        sinceSeries={sinceSeries}
-        sinceLabel={inceptionDate ? fmtDate(inceptionDate) : "first trade"}
-      />
+      {/* Benchmark comparison since first trade */}
+      <ComparisonCards series={sinceSeries} />
 
-      {/* Cash + last updated */}
-      <section className="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 pt-4 text-sm text-zinc-500">
-        <span>Cash: {fmtUSD(summary.cash)}</span>
-        <span>Updated {fmtDateTime(summary.updated_at)}</span>
+      {/* Footer */}
+      <section className="border-t border-zinc-200 dark:border-zinc-800 pt-4 text-sm text-zinc-500 text-right">
+        Updated {fmtDateTime(summary.updated_at)}
       </section>
     </div>
   );

@@ -26,8 +26,27 @@ export async function GET() {
       `SELECT key, value, updated_at FROM puller_meta`,
     );
 
+    const latestSnapshot = await db.query(
+      `SELECT portfolio_value, cash, ytd_return_pct, ytd_return_dollar, updated_at
+         FROM account_snapshot ORDER BY updated_at DESC LIMIT 1`,
+    );
+
+    const portfolioYtdSamples = await db.query(
+      `SELECT date::text AS date, value FROM performance_daily
+         WHERE symbol = 'PORTFOLIO' AND date >= date_trunc('year', CURRENT_DATE)
+         ORDER BY date LIMIT 3`,
+    );
+    const portfolioLatest = await db.query(
+      `SELECT date::text AS date, value FROM performance_daily
+         WHERE symbol = 'PORTFOLIO'
+         ORDER BY date DESC LIMIT 3`,
+    );
+
     return NextResponse.json({
       counts: Object.fromEntries(counts.rows.map((r) => [r.table, Number(r.n)])),
+      latestSnapshot: latestSnapshot.rows[0] ?? null,
+      portfolioYtdFirst3: portfolioYtdSamples.rows,
+      portfolioLatest3: portfolioLatest.rows,
       recentActivity: recentActivity.rows,
       meta: meta.rows,
     });

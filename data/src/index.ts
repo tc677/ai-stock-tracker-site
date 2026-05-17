@@ -62,9 +62,11 @@ async function setMeta(key: string, value: string) {
 }
 
 async function maybeBackfill() {
-  // History backfill (portfolio equity + benchmark bars) - one-time.
+  // Portfolio history backfill - one-time. Sets the "backfilled_history"
+  // marker for backwards compatibility with old deploys.
+  let portfolioStartISO: string | null = null;
   if (!(await getMeta("backfilled_history"))) {
-    console.log("starting history backfill from Alpaca...");
+    console.log("starting portfolio history backfill from Alpaca...");
     const history = await alpaca.portfolioHistory("5A", "1D");
     let portfolioRows = 0;
     for (let i = 0; i < history.timestamp.length; i++) {
@@ -81,32 +83,37 @@ async function maybeBackfill() {
       );
       portfolioRows++;
     }
-
-    const benchmarkSymbols = await getBenchmarkSymbols();
-    const firstTs =
-      history.timestamp[0] ?? Date.now() / 1000 - 5 * 365 * 24 * 60 * 60;
-    const start = new Date(firstTs * 1000).toISOString();
-    let benchmarkRows = 0;
-    for (const symbol of benchmarkSymbols) {
-      const bars = await getDailyBars(symbol, start);
-      for (const b of bars) {
-        await db.query(
-          `INSERT INTO performance_daily (date, symbol, value)
-           VALUES ($1, $2, $3)
-           ON CONFLICT (date, symbol) DO UPDATE SET value = EXCLUDED.value`,
-          [b.date, symbol, b.close],
-        );
-        benchmarkRows++;
-      }
-    }
+    portfolioStartISO =
+      history.timestamp[0] != null
+        ? new Date(history.timestamp[0] * 1000).toISOString()
+        : null;
     await setMeta("backfilled_history", new Date().toISOString());
-    console.log(
-      `history backfill complete: ${portfolioRows} portfolio rows, ${benchmarkRows} benchmark rows`,
-    );
+    console.log(`portfolio backfill complete: ${portfolioRows} rows`);
   }
 
-  // Orders backfill - separate marker so it runs even if the history
-  // backfill already completed on a prior deploy.
+  // Per-benchmark backfill - each benchmark gets its own marker, so when
+  // you add a new benchmark to the seed (or insert a row manually), only
+  // that one gets backfilled on the next puller run.
+  const benchmarkSymbols = await getBenchmarkSymbols();
+  for (const symbol of benchmarkSymbols) {
+    const key = `backfilled_benchmark_${symbol}`;
+    if (await getMeta(key)) continue;
+    const start = portfolioStartISO ?? (await earliestPortfolioDateISO());
+    console.log(`backfilling benchmark ${symbol} from ${start}...`);
+    const bars = await getDailyBars(symbol, start);
+    for (const b of bars) {
+      await db.query(
+        `INSERT INTO performance_daily (date, symbol, value)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (date, symbol) DO UPDATE SET value = EXCLUDED.value`,
+        [b.date, symbol, b.close],
+      );
+    }
+    await setMeta(key, new Date().toISOString());
+    console.log(`backfilled ${symbol}: ${bars.length} rows`);
+  }
+
+  // Orders backfill - one-time.
   if (!(await getMeta("backfilled_orders"))) {
     console.log("starting orders backfill from Alpaca...");
     const allOrders = await alpaca.filledOrders();
@@ -114,6 +121,16 @@ async function maybeBackfill() {
     await setMeta("backfilled_orders", new Date().toISOString());
     console.log(`orders backfill complete: ${orderRows} order rows inserted`);
   }
+}
+
+async function earliestPortfolioDateISO(): Promise<string> {
+  const { rows } = await db.query<{ date: string | null }>(
+    `SELECT (MIN(date))::text AS date FROM performance_daily WHERE symbol = 'PORTFOLIO'`,
+  );
+  const d = rows[0]?.date;
+  if (d) return new Date(d + "T00:00:00Z").toISOString();
+  // Fall back to ~5 years ago.
+  return new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000).toISOString();
 }
 
 async function insertOrders(orders: { id: string; symbol: string; side: "buy" | "sell"; filled_qty: string; filled_avg_price: string | null; filled_at: string | null }[]): Promise<number> {
