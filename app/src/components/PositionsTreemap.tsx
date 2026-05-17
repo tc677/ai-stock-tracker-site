@@ -32,7 +32,7 @@ export function PositionsTreemap({ positions }: { positions: Position[] }) {
           data={data}
           dataKey="size"
           nameKey="name"
-          stroke="#0a0a0a"
+          stroke="none"
           isAnimationActive={false}
           content={<Tile />}
         >
@@ -43,12 +43,13 @@ export function PositionsTreemap({ positions }: { positions: Position[] }) {
   );
 }
 
-// Smooth color gradient: rose at -CAP%, zinc at 0%, emerald at +CAP%.
-// Values outside ±CAP saturate at the endpoint colors.
+// Smooth color gradient: dark rose at -CAP%, light gray at 0%, dark
+// emerald at +CAP%. Values outside ±CAP saturate at the endpoint colors.
+// Lighter middle, darker extremes so the eye is drawn to big movers.
 const CAP_PCT = 10;
-const LOSS = [225, 29, 72];   // rose-600
-const FLAT = [82, 82, 91];    // zinc-600
-const GAIN = [5, 150, 105];   // emerald-600
+const LOSS = [159, 18, 57];    // rose-800
+const FLAT = [212, 212, 216];  // zinc-300
+const GAIN = [4, 120, 87];     // emerald-700
 
 function lerp(a: number, b: number, t: number): number {
   return Math.round(a + (b - a) * t);
@@ -103,7 +104,7 @@ function Tile(props: TileProps) {
         y={y}
         width={width}
         height={height}
-        style={{ fill, stroke: "#0a0a0a", strokeWidth: 1 }}
+        style={{ fill, stroke: "none" }}
       />
       {showLabel && (
         <text

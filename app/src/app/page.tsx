@@ -113,7 +113,7 @@ export default async function Home() {
                 className="inline-block h-3 w-48 rounded-sm"
                 style={{
                   background:
-                    "linear-gradient(to right, rgb(225,29,72), rgb(82,82,91), rgb(5,150,105))",
+                    "linear-gradient(to right, rgb(159,18,57), rgb(212,212,216), rgb(4,120,87))",
                 }}
               />
               <span>≥ +10%</span>
