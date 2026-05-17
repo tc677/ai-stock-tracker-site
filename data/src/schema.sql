@@ -48,11 +48,12 @@ CREATE TABLE IF NOT EXISTS benchmarks (
 );
 
 -- Seed starter benchmarks. Add more by inserting a row - no code change.
+-- Yahoo Finance index symbols (more reliable than Alpaca's IEX ETF data).
 INSERT INTO benchmarks (symbol, label, kind, sort_order) VALUES
-  ('SPY', 'S&P 500',      'etf', 10),
-  ('QQQ', 'Nasdaq-100',   'etf', 20),
-  ('IWB', 'Russell 1000', 'etf', 30),
-  ('IWM', 'Russell 2000', 'etf', 40)
+  ('^GSPC', 'S&P 500',      'index', 10),
+  ('^NDX',  'Nasdaq-100',   'index', 20),
+  ('^RUI',  'Russell 1000', 'index', 30),
+  ('^RUT',  'Russell 2000', 'index', 40)
 ON CONFLICT (symbol) DO NOTHING;
 
 -- Latest snapshot per benchmark, upserted each puller run.

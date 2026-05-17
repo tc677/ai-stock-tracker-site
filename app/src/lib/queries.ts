@@ -110,10 +110,12 @@ import { isIntraday, rangeSinceClause, type Range } from "./ranges";
 // percentage change reflects the actual trading result rather than starting
 // at the post-first-trade equity.
 export async function getInceptionDate(): Promise<string | null> {
+  // Subtract one calendar day from the earliest trade (in ET) so we have
+  // an "all cash" baseline. Cast back to date so we return YYYY-MM-DD only,
+  // avoiding timezone shifts when JS later parses it.
   const { rows } = await db.query<{ date: string | null }>(
     `SELECT (
-       (MIN(filled_at) AT TIME ZONE 'America/New_York')::date
-       - INTERVAL '1 day'
+       (MIN(filled_at) AT TIME ZONE 'America/New_York')::date - 1
      )::text AS date
      FROM activity`,
   );

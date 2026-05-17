@@ -1,65 +1,93 @@
-// Market data via Alpaca's data API (uses the same keys as trading).
-// Free tier provides IEX-feed data, which is plenty for index quotes.
+// Market data for benchmarks via Yahoo Finance's free chart endpoint.
+// No API key required. Use adjusted close so dividends and splits are
+// already accounted for - the returned prices reflect total return.
+//
+// Symbols use Yahoo's caret-prefixed index format (^GSPC, ^NDX, ^RUI, ^RUT)
+// instead of ETF proxies (SPY, QQQ, IWB, IWM) so we measure the indices
+// themselves, not the funds' tracking-adjusted approximations.
 
-const base = "https://data.alpaca.markets/v2";
+const BASE = "https://query1.finance.yahoo.com/v8/finance/chart";
 
-const headers = () => ({
-  "APCA-API-KEY-ID": process.env.ALPACA_KEY_ID!,
-  "APCA-API-SECRET-KEY": process.env.ALPACA_SECRET_KEY!,
-});
+// Yahoo blocks default fetch user-agents. A normal browser UA gets through.
+const HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+};
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${base}${path}`, { headers: headers() });
+type ChartResponse = {
+  chart: {
+    result: Array<{
+      timestamp: number[];
+      indicators: {
+        quote: Array<{ close: (number | null)[] }>;
+        adjclose?: Array<{ adjclose: (number | null)[] }>;
+      };
+    }> | null;
+    error: { code: string; description: string } | null;
+  };
+};
+
+async function fetchChart(
+  symbol: string,
+  period1: number,
+  period2: number,
+): Promise<{ ts: number; value: number }[]> {
+  const url = `${BASE}/${encodeURIComponent(symbol)}?interval=1d&period1=${period1}&period2=${period2}`;
+  const res = await fetch(url, { headers: HEADERS });
   if (!res.ok) {
-    throw new Error(`Alpaca data ${path} → ${res.status} ${await res.text()}`);
+    throw new Error(`Yahoo ${symbol} HTTP ${res.status}: ${await res.text()}`);
   }
-  return res.json() as Promise<T>;
+  const data = (await res.json()) as ChartResponse;
+  if (data.chart.error) {
+    throw new Error(
+      `Yahoo ${symbol}: ${data.chart.error.code} ${data.chart.error.description}`,
+    );
+  }
+  const result = data.chart.result?.[0];
+  if (!result) return [];
+
+  const ts = result.timestamp ?? [];
+  const adj = result.indicators.adjclose?.[0]?.adjclose;
+  const closes = adj ?? result.indicators.quote[0]?.close ?? [];
+
+  const out: { ts: number; value: number }[] = [];
+  for (let i = 0; i < ts.length; i++) {
+    const v = closes[i];
+    if (v != null) out.push({ ts: ts[i], value: v });
+  }
+  return out;
 }
 
-type LatestQuoteResp = {
-  quote: { ap: number; bp: number };
-};
-
-type BarsResp = {
-  bars: Array<{ t: string; c: number; o: number }>;
-  next_page_token: string | null;
-};
-
 export async function getQuote(symbol: string): Promise<number> {
-  const r = await get<LatestQuoteResp>(`/stocks/${symbol}/quotes/latest`);
-  return (r.quote.ap + r.quote.bp) / 2;
+  const end = Math.floor(Date.now() / 1000);
+  const start = end - 7 * 24 * 60 * 60; // look back a week for safety
+  const points = await fetchChart(symbol, start, end);
+  return points[points.length - 1]?.value ?? 0;
 }
 
 export async function getYtdReturnPct(symbol: string): Promise<number> {
-  const start = new Date(new Date().getFullYear(), 0, 1).toISOString();
-  const r = await get<BarsResp>(
-    `/stocks/${symbol}/bars?timeframe=1Day&start=${start}&limit=500&adjustment=split`,
+  const start = Math.floor(
+    new Date(new Date().getFullYear(), 0, 1).getTime() / 1000,
   );
-  const bars = r.bars ?? [];
-  if (bars.length < 2) return 0;
-  const first = bars[0].o;
-  const last = bars[bars.length - 1].c;
+  const end = Math.floor(Date.now() / 1000);
+  const points = await fetchChart(symbol, start, end);
+  if (points.length < 2) return 0;
+  const first = points[0].value;
+  const last = points[points.length - 1].value;
   if (!first) return 0;
   return ((last - first) / first) * 100;
 }
 
-// Fetches daily closing prices for a symbol over a range. Used for backfill
-// of benchmark history. Paginates if Alpaca returns next_page_token.
+// Daily closes for a symbol from startISO to now. Used by the backfill.
 export async function getDailyBars(
   symbol: string,
   startISO: string,
 ): Promise<{ date: string; close: number }[]> {
-  const out: { date: string; close: number }[] = [];
-  let token: string | null = null;
-  do {
-    const tokenQs: string = token ? `&page_token=${token}` : "";
-    const r: BarsResp = await get<BarsResp>(
-      `/stocks/${symbol}/bars?timeframe=1Day&start=${startISO}&limit=10000&adjustment=split${tokenQs}`,
-    );
-    for (const b of r.bars ?? []) {
-      out.push({ date: b.t.slice(0, 10), close: b.c });
-    }
-    token = r.next_page_token;
-  } while (token);
-  return out;
+  const start = Math.floor(new Date(startISO).getTime() / 1000);
+  const end = Math.floor(Date.now() / 1000);
+  const points = await fetchChart(symbol, start, end);
+  return points.map((p) => ({
+    date: new Date(p.ts * 1000).toISOString().slice(0, 10),
+    close: p.value,
+  }));
 }

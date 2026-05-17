@@ -53,19 +53,18 @@ export default async function Home() {
           <span className={`text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums ${heroColor}`}>
             {fmtUSD(summary.portfolio_value)}
           </span>
-          {sincePct != null && inceptionDate && (
+          {sincePct != null && (
             <span className={`text-lg font-medium tabular-nums ${heroColor}`}>
               {positive ? "+" : ""}
               {fmtPct(sincePct)}
-              <span className="text-sm font-normal text-zinc-500 ml-1">
-                since {fmtDate(inceptionDate)}
-              </span>
             </span>
           )}
         </div>
-        <div className="mt-3 text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-          <span className="text-sm font-normal text-zinc-500 mr-2">Cash</span>
-          {fmtUSD(summary.cash)}
+        <div className="mt-4">
+          <div className="text-sm font-medium text-zinc-500">Cash</div>
+          <div className="text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
+            {fmtUSD(summary.cash)}
+          </div>
         </div>
       </section>
 

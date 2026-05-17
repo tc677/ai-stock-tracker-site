@@ -8,6 +8,7 @@ export const handler = async () => {
   const startedAt = Date.now();
   try {
     await ensureSchema();
+    await maybeMigrateToYahooIndices();
 
     // One-time backfill of historical data from Alpaca. Runs only if the
     // puller_meta marker isn't set. Independent of market hours - the
@@ -59,6 +60,35 @@ async function setMeta(key: string, value: string) {
      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
     [key, value],
   );
+}
+
+async function maybeMigrateToYahooIndices() {
+  if (await getMeta("migrated_to_yahoo_indices")) return;
+  console.log("migrating benchmarks from Alpaca ETFs to Yahoo indices...");
+
+  const oldSymbols = ["SPY", "QQQ", "IWB", "IWM"];
+  await db.query(
+    `DELETE FROM performance_daily WHERE symbol = ANY($1)`,
+    [oldSymbols],
+  );
+  await db.query(
+    `DELETE FROM performance_intraday WHERE symbol = ANY($1)`,
+    [oldSymbols],
+  );
+  // benchmark_snapshot has ON DELETE CASCADE on the benchmarks FK.
+  await db.query(`DELETE FROM benchmarks WHERE symbol = ANY($1)`, [oldSymbols]);
+
+  // Clear any per-benchmark backfill markers for the old symbols so we
+  // don't leave dead state behind.
+  await db.query(
+    `DELETE FROM puller_meta
+      WHERE key LIKE 'backfilled_benchmark_%'
+        AND replace(key, 'backfilled_benchmark_', '') = ANY($1)`,
+    [oldSymbols],
+  );
+
+  await setMeta("migrated_to_yahoo_indices", new Date().toISOString());
+  console.log("migration complete; new benchmarks will backfill on this run");
 }
 
 async function maybeBackfill() {
