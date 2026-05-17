@@ -50,7 +50,8 @@ export default async function Home() {
     : "text-rose-600 dark:text-rose-400";
 
   const heroBlock = (
-    <section>
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold tracking-tight">Overview</h2>
       <div className="text-sm font-medium text-zinc-500 mb-1">
         Portfolio value
       </div>
@@ -109,7 +110,7 @@ export default async function Home() {
               className="inline-block h-3 w-48 rounded-sm"
               style={{
                 background:
-                  "linear-gradient(to right, rgb(196,50,50), rgb(243,165,165), rgb(140,140,140), rgb(170,207,105), rgb(80,138,35))",
+                  "linear-gradient(to right, rgb(185,28,28), rgb(248,113,113), rgb(82,82,91), rgb(74,222,128), rgb(21,128,61))",
               }}
             />
             <span>≥ +10%</span>
@@ -172,12 +173,12 @@ export default async function Home() {
 
   return (
     <div className="space-y-12">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12">
-        <div className="space-y-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-16">
+        <div className="space-y-32">
           {heroBlock}
           {positionsBlock}
         </div>
-        <div className="space-y-12">
+        <div className="space-y-32 lg:mt-32">
           {performanceBlock}
           {activityBlock}
         </div>

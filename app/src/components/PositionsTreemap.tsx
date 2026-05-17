@@ -48,11 +48,11 @@ export function PositionsTreemap({ positions }: { positions: Position[] }) {
 // movers go dark and near-zero positions stay muted.
 const CAP_PCT = 10;
 const STOPS: { t: number; rgb: [number, number, number] }[] = [
-  { t: -1.0, rgb: [196, 50, 50] },    // strong red at -CAP
-  { t: -0.5, rgb: [243, 165, 165] },  // soft pink mid-loss
-  { t: 0.0, rgb: [140, 140, 140] },   // neutral gray
-  { t: 0.5, rgb: [170, 207, 105] },   // chartreuse mid-gain
-  { t: 1.0, rgb: [80, 138, 35] },     // forest green at +CAP
+  { t: -1.0, rgb: [185, 28, 28] },    // deep vivid red at -CAP
+  { t: -0.5, rgb: [248, 113, 113] },  // bright coral mid-loss
+  { t: 0.0, rgb: [82, 82, 91] },      // neutral slate
+  { t: 0.5, rgb: [74, 222, 128] },    // bright emerald mid-gain
+  { t: 1.0, rgb: [21, 128, 61] },     // deep emerald at +CAP
 ];
 
 function lerp(a: number, b: number, t: number): number {
