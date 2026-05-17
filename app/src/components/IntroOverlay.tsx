@@ -102,12 +102,11 @@ export function IntroOverlay() {
       }}
     >
       <div
-        className="font-mono tracking-[0.15em] text-emerald-400 select-none"
+        className="font-semibold tracking-tight text-white select-none"
         style={{
-          fontSize: "clamp(1.75rem, 6vw, 4rem)",
-          textShadow: "0 0 18px rgba(52,211,153,0.55)",
-          transform: zooming ? "scale(8)" : "scale(1)",
-          transition: `transform ${ZOOM_OUT_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+          fontSize: "clamp(2rem, 7vw, 5rem)",
+          transform: zooming ? "scale(0.15)" : "scale(1)",
+          transition: `transform ${ZOOM_OUT_DURATION}ms cubic-bezier(0.7, 0, 0.3, 1)`,
           whiteSpace: "pre",
         }}
       >
