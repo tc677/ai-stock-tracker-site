@@ -140,6 +140,9 @@ export async function getPerformanceSeriesSince(
        FROM performance_daily p
        LEFT JOIN benchmarks b ON b.symbol = p.symbol
        WHERE p.date >= $1::date
+         AND p.date IN (
+           SELECT DISTINCT date FROM performance_daily WHERE symbol <> 'PORTFOLIO'
+         )
        ORDER BY p.symbol, p.date ASC`,
     [startDate],
   );
@@ -182,6 +185,9 @@ export async function getPerformanceSeries(
          FROM performance_daily p
          LEFT JOIN benchmarks b ON b.symbol = p.symbol
          WHERE ${since}
+           AND p.date IN (
+             SELECT DISTINCT date FROM performance_daily WHERE symbol <> 'PORTFOLIO'
+           )
          ORDER BY p.symbol, p.date ASC`;
 
   const { rows } = await db.query<{

@@ -12,11 +12,8 @@ export function ComparisonCards({
     return null;
   }
 
-  const portfolioPct = pctChange(portfolio);
-
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <Card label="Portfolio" pct={portfolioPct} symbol="" emphasis />
       {benchmarks.map((b) => (
         <Card key={b.symbol} label={b.label} symbol={b.symbol} pct={pctChange(b)} />
       ))}
@@ -34,12 +31,10 @@ function Card({
   label,
   symbol,
   pct,
-  emphasis,
 }: {
   label: string;
   symbol: string;
   pct: number;
-  emphasis?: boolean;
 }) {
   const positive = pct >= 0;
   const color = positive
@@ -47,13 +42,7 @@ function Card({
     : "text-rose-600 dark:text-rose-400";
 
   return (
-    <div
-      className={`rounded-md border p-2.5 ${
-        emphasis
-          ? "border-zinc-300 dark:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/40"
-          : "border-zinc-200 dark:border-zinc-800"
-      }`}
-    >
+    <div className="rounded-md border p-2.5 border-zinc-200 dark:border-zinc-800">
       <div className="text-[11px] uppercase tracking-wide text-zinc-500 truncate">
         {label}
       </div>

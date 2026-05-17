@@ -11,14 +11,14 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "AI Trading Dashboard",
-    template: "%s · AI Trading Dashboard",
+    default: "CanMyAITrade",
+    template: "%s · CanMyAITrade",
   },
   description:
     "Live performance of an AI-managed stock portfolio, compared against the S&P 500 and Nasdaq-100.",
   openGraph: {
     type: "website",
-    siteName: "AI Trading Dashboard",
+    siteName: "CanMyAITrade",
     url: siteUrl,
   },
   twitter: { card: "summary_large_image" },
@@ -37,7 +37,7 @@ export default function RootLayout({
         <Nav />
         <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8">{children}</main>
         <footer className="border-t border-zinc-200 dark:border-zinc-800 py-4 text-center text-xs text-zinc-500">
-          Refreshes every 5 minutes during market hours. For informational use
+          Refreshes every minute during market hours. For informational use
           only, not investment advice.
         </footer>
       </body>

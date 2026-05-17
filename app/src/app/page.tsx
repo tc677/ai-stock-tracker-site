@@ -1,7 +1,11 @@
 import { ComparisonCards } from "@/components/ComparisonCards";
+import { FilteredChart } from "@/components/FilteredChart";
+import { PositionsTreemap } from "@/components/PositionsTreemap";
 import {
+  getActivity,
   getInceptionDate,
   getPerformanceSeriesSince,
+  getPositions,
   getSummary,
 } from "@/lib/queries";
 import { fmtDate, fmtDateTime, fmtPct, fmtUSD } from "@/lib/format";
@@ -9,9 +13,11 @@ import { fmtDate, fmtDateTime, fmtPct, fmtUSD } from "@/lib/format";
 export const revalidate = 10;
 
 export default async function Home() {
-  const [summary, inceptionDate] = await Promise.all([
+  const [summary, inceptionDate, positions, activity] = await Promise.all([
     getSummary().catch(() => null),
     getInceptionDate().catch(() => null),
+    getPositions().catch(() => []),
+    getActivity(100).catch(() => []),
   ]);
 
   const sinceSeries = inceptionDate
@@ -20,11 +26,8 @@ export default async function Home() {
 
   if (!summary) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Overview</h1>
-        <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-12 text-center text-zinc-500">
-          No data yet. The puller will populate this once it runs.
-        </div>
+      <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-12 text-center text-zinc-500">
+        No data yet. The puller will populate this once it runs.
       </div>
     );
   }
@@ -43,7 +46,7 @@ export default async function Home() {
     : "text-rose-600 dark:text-rose-400";
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-12">
       {/* Hero */}
       <section>
         <div className="text-sm font-medium text-zinc-500 mb-1">
@@ -77,6 +80,93 @@ export default async function Home() {
           <ComparisonCards series={sinceSeries} />
         </section>
       )}
+
+      {/* Performance chart */}
+      {inceptionDate && sinceSeries.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold tracking-tight">Performance</h2>
+          <p className="text-sm text-zinc-500">Since {fmtDate(inceptionDate)}</p>
+          <FilteredChart series={sinceSeries} />
+        </section>
+      )}
+
+      {/* Positions treemap */}
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold tracking-tight">Positions</h2>
+        {positions.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center text-zinc-500">
+            No open positions.
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-zinc-500">
+              Tile size = position value. Color = unrealized P/L %.
+            </p>
+            <PositionsTreemap positions={positions} />
+            <div className="flex items-center gap-3 text-xs text-zinc-500">
+              <span>≤ -10%</span>
+              <span
+                className="inline-block h-3 w-48 rounded-sm"
+                style={{
+                  background:
+                    "linear-gradient(to right, rgb(225,29,72), rgb(82,82,91), rgb(5,150,105))",
+                }}
+              />
+              <span>≥ +10%</span>
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* Activity */}
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold tracking-tight">Activity</h2>
+        {activity.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center text-zinc-500">
+            No trades yet.
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+            <table className="w-full text-sm">
+              <thead className="bg-zinc-50 dark:bg-zinc-900 text-left">
+                <tr>
+                  <th className="px-4 py-2 font-medium">When</th>
+                  <th className="px-4 py-2 font-medium">Symbol</th>
+                  <th className="px-4 py-2 font-medium">Side</th>
+                  <th className="px-4 py-2 font-medium text-right">Qty</th>
+                  <th className="px-4 py-2 font-medium text-right">Price</th>
+                  <th className="px-4 py-2 font-medium text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activity.map((a) => (
+                  <tr
+                    key={a.id}
+                    className="border-t border-zinc-200 dark:border-zinc-800"
+                  >
+                    <td className="px-4 py-2">{fmtDateTime(a.filled_at)}</td>
+                    <td className="px-4 py-2 font-medium">{a.symbol}</td>
+                    <td
+                      className={`px-4 py-2 uppercase text-xs font-semibold ${
+                        a.side === "buy"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-rose-600 dark:text-rose-400"
+                      }`}
+                    >
+                      {a.side}
+                    </td>
+                    <td className="px-4 py-2 text-right">{a.qty}</td>
+                    <td className="px-4 py-2 text-right">{fmtUSD(a.price)}</td>
+                    <td className="px-4 py-2 text-right">
+                      {fmtUSD(a.qty * a.price)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       {/* Footer */}
       <section className="border-t border-zinc-200 dark:border-zinc-800 pt-4 text-sm text-zinc-500 text-right">
