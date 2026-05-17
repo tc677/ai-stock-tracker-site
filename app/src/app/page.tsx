@@ -49,130 +49,140 @@ export default async function Home() {
     ? "text-emerald-600 dark:text-emerald-400"
     : "text-rose-600 dark:text-rose-400";
 
-  return (
-    <div className="space-y-12">
-      {/* Hero */}
-      <section>
-        <div className="text-sm font-medium text-zinc-500 mb-1">
-          Portfolio value
-        </div>
-        <div className="flex items-baseline gap-3 flex-wrap">
-          <span className={`text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums ${heroColor}`}>
-            {fmtUSD(summary.portfolio_value)}
+  const heroBlock = (
+    <section>
+      <div className="text-sm font-medium text-zinc-500 mb-1">
+        Portfolio value
+      </div>
+      <div className="flex items-baseline gap-3 flex-wrap">
+        <span className={`text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums ${heroColor}`}>
+          {fmtUSD(summary.portfolio_value)}
+        </span>
+        {sincePct != null && (
+          <span className={`text-lg font-medium tabular-nums ${heroColor}`}>
+            {positive ? "+" : ""}
+            {fmtPct(sincePct)}
           </span>
-          {sincePct != null && (
-            <span className={`text-lg font-medium tabular-nums ${heroColor}`}>
-              {positive ? "+" : ""}
-              {fmtPct(sincePct)}
-            </span>
-          )}
+        )}
+      </div>
+      <div className="mt-4">
+        <div className="text-sm font-medium text-zinc-500">Cash</div>
+        <div className="text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
+          {fmtUSD(summary.cash)}
         </div>
-        <div className="mt-4">
-          <div className="text-sm font-medium text-zinc-500">Cash</div>
-          <div className="text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-            {fmtUSD(summary.cash)}
-          </div>
-        </div>
-      </section>
-
-      {/* Benchmark comparison since first trade */}
+      </div>
       {inceptionDate && (
-        <section className="space-y-3">
+        <div className="mt-6 space-y-3">
           <h2 className="text-sm font-medium text-zinc-500">
             Since {fmtDate(inceptionDate)}
           </h2>
           <ComparisonCards series={sinceSeries} />
-        </section>
+        </div>
       )}
+    </section>
+  );
 
-      {/* Performance chart */}
-      {inceptionDate && sinceSeries.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-xl font-semibold tracking-tight">Performance</h2>
-          <p className="text-sm text-zinc-500">Since {fmtDate(inceptionDate)}</p>
-          <FilteredChart series={sinceSeries} />
-        </section>
+  const performanceBlock = inceptionDate && sinceSeries.length > 0 && (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold tracking-tight">Performance</h2>
+      <p className="text-sm text-zinc-500">Since {fmtDate(inceptionDate)}</p>
+      <FilteredChart series={sinceSeries} />
+    </section>
+  );
+
+  const positionsBlock = (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold tracking-tight">Positions</h2>
+      {positions.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center text-zinc-500">
+          No open positions.
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-zinc-500">
+            Tile size = position value. Color = unrealized P/L %.
+          </p>
+          <PositionsTreemap positions={positions} />
+          <div className="flex items-center gap-3 text-xs text-zinc-500">
+            <span>≤ -10%</span>
+            <span
+              className="inline-block h-3 w-48 rounded-sm"
+              style={{
+                background:
+                  "linear-gradient(to right, rgb(196,50,50), rgb(243,165,165), rgb(140,140,140), rgb(170,207,105), rgb(80,138,35))",
+              }}
+            />
+            <span>≥ +10%</span>
+          </div>
+        </>
       )}
+    </section>
+  );
 
-      {/* Positions treemap */}
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">Positions</h2>
-        {positions.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center text-zinc-500">
-            No open positions.
-          </div>
-        ) : (
-          <>
-            <p className="text-sm text-zinc-500">
-              Tile size = position value. Color = unrealized P/L %.
-            </p>
-            <PositionsTreemap positions={positions} />
-            <div className="flex items-center gap-3 text-xs text-zinc-500">
-              <span>≤ -10%</span>
-              <span
-                className="inline-block h-3 w-48 rounded-sm"
-                style={{
-                  background:
-                    "linear-gradient(to right, rgb(196,50,50), rgb(243,165,165), rgb(140,140,140), rgb(170,207,105), rgb(80,138,35))",
-                }}
-              />
-              <span>≥ +10%</span>
-            </div>
-          </>
-        )}
-      </section>
-
-      {/* Activity */}
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">Activity</h2>
-        {activity.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center text-zinc-500">
-            No trades yet.
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-50 dark:bg-zinc-900 text-left">
-                <tr>
-                  <th className="px-4 py-2 font-medium">When</th>
-                  <th className="px-4 py-2 font-medium">Symbol</th>
-                  <th className="px-4 py-2 font-medium">Side</th>
-                  <th className="px-4 py-2 font-medium text-right">Qty</th>
-                  <th className="px-4 py-2 font-medium text-right">Price</th>
-                  <th className="px-4 py-2 font-medium text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activity.map((a) => (
-                  <tr
-                    key={a.id}
-                    className="border-t border-zinc-200 dark:border-zinc-800"
+  const activityBlock = (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold tracking-tight">Activity</h2>
+      {activity.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center text-zinc-500">
+          No trades yet.
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-50 dark:bg-zinc-900 text-left">
+              <tr>
+                <th className="px-4 py-2 font-medium">When</th>
+                <th className="px-4 py-2 font-medium">Symbol</th>
+                <th className="px-4 py-2 font-medium">Side</th>
+                <th className="px-4 py-2 font-medium text-right">Qty</th>
+                <th className="px-4 py-2 font-medium text-right">Price</th>
+                <th className="px-4 py-2 font-medium text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activity.map((a) => (
+                <tr
+                  key={a.id}
+                  className="border-t border-zinc-200 dark:border-zinc-800"
+                >
+                  <td className="px-4 py-2">{fmtDateTime(a.filled_at)}</td>
+                  <td className="px-4 py-2 font-medium">{a.symbol}</td>
+                  <td
+                    className={`px-4 py-2 uppercase text-xs font-semibold ${
+                      a.side === "buy"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-rose-600 dark:text-rose-400"
+                    }`}
                   >
-                    <td className="px-4 py-2">{fmtDateTime(a.filled_at)}</td>
-                    <td className="px-4 py-2 font-medium">{a.symbol}</td>
-                    <td
-                      className={`px-4 py-2 uppercase text-xs font-semibold ${
-                        a.side === "buy"
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-rose-600 dark:text-rose-400"
-                      }`}
-                    >
-                      {a.side}
-                    </td>
-                    <td className="px-4 py-2 text-right">{a.qty}</td>
-                    <td className="px-4 py-2 text-right">{fmtUSD(a.price)}</td>
-                    <td className="px-4 py-2 text-right">
-                      {fmtUSD(a.qty * a.price)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                    {a.side}
+                  </td>
+                  <td className="px-4 py-2 text-right">{a.qty}</td>
+                  <td className="px-4 py-2 text-right">{fmtUSD(a.price)}</td>
+                  <td className="px-4 py-2 text-right">
+                    {fmtUSD(a.qty * a.price)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
 
-      {/* Footer */}
+  return (
+    <div className="space-y-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12">
+        <div className="space-y-12">
+          {heroBlock}
+          {positionsBlock}
+        </div>
+        <div className="space-y-12">
+          {performanceBlock}
+          {activityBlock}
+        </div>
+      </div>
+
       <section className="border-t border-zinc-200 dark:border-zinc-800 pt-4 text-sm text-zinc-500 text-right">
         Updated {fmtDateTime(summary.updated_at)}
       </section>
