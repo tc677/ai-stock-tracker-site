@@ -39,12 +39,12 @@ body[data-intro="zoom"] footer {
 }
 
 /* Background trend line — draw-in.
-   When the dim line first mounts (after the intro hands off) the path
-   is drawn left-to-right by animating its full-length dasharray's
-   offset from 100 -> 0 over 1.5 s. After this completes the line
-   stays at full visibility. Runs concurrently with the hero number
-   tween and color fade so the page comes alive in a single beat. */
-.bg-trend-dim {
+   The single path is drawn left-to-right by animating its full-length
+   dasharray's offset from 100 -> 0 over 1.5 s. Runs concurrently with
+   the hero number tween and color fade so the page comes alive in a
+   single beat. After it completes the line stays fully drawn and the
+   gradient sweep takes over to provide the moving glow. */
+.bg-trend-line {
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
   animation: bgTrendDraw 1500ms ease-out forwards;
@@ -56,33 +56,10 @@ body[data-intro="zoom"] footer {
   }
 }
 
-/* Background trend line — glow pulse.
-   A short (8% of the normalized path length) visible segment loops
-   end-to-end every 10 s. animation-delay matches the draw-in so the
-   pulse doesn't appear until the line is fully drawn. */
-.bg-trend-pulse {
-  stroke-dasharray: 8 200;
-  stroke-dashoffset: 8;
-  animation: bgTrendSweep 10s linear 1500ms infinite;
-}
-
-@keyframes bgTrendSweep {
-  from {
-    stroke-dashoffset: 8;
-  }
-  to {
-    stroke-dashoffset: -100;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .bg-trend-dim {
+  .bg-trend-line {
     animation: none;
     stroke-dashoffset: 0;
-  }
-  .bg-trend-pulse {
-    animation: none;
-    opacity: 0;
   }
 }
 

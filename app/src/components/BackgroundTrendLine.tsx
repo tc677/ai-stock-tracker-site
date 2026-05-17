@@ -1,19 +1,20 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useIntro } from "./Intro";
 
 // One jagged stock-chart-style line that stretches across the page
 // behind the dashboard. Color and direction follow the portfolio
 // trend (emerald rising on up days, rose falling on down days).
 //
-// Every ~5 s a soft-glow pulse rides along the line from left to right
-// by animating stroke-dashoffset on a second copy of the path. The
-// highlight follows the line's actual trajectory (up the peaks, down
-// through the valleys) instead of sweeping a vertical window across
-// the screen, which reads more like a live trading signal.
+// To get ONE physical stroke (not an overlay) that has a single glow
+// passing through it, the stroke is painted with a horizontal SVG
+// linearGradient. Most of the gradient sits at the dim opacity, but a
+// narrow window in the middle ramps up to full brightness. An SVG
+// animateTransform slides the entire gradient from off-the-left-edge
+// to off-the-right-edge over 10s and loops, so the bright window
+// travels end-to-end through the line.
 
-// 13 segments — varying peak heights so it doesn't look like a uniform
-// zigzag. Up version trends bottom-left -> top-right.
 const PATH_UP =
   "M 0 90 L 8 82 L 16 86 L 25 72 L 33 78 L 42 60 L 50 68 L 58 50 L 67 56 L 75 38 L 83 44 L 92 24 L 100 18";
 const PATH_DOWN =
@@ -21,13 +22,25 @@ const PATH_DOWN =
 
 export function BackgroundTrendLine({ isUp }: { isUp: boolean }) {
   const { phase } = useIntro();
-  // The line draws itself and the pulse starts only once the page has
-  // handed off from the intro — same trigger as the number tween and
-  // color fade, so they all animate in together.
+  // Match the rest of the page: mount only once the intro has handed
+  // off, so the draw-in and the gradient sweep both start fresh while
+  // the user is actually looking.
   const revealed = phase === "plop" || phase === "done";
+
+  // Honor prefers-reduced-motion: the dim line still shows, but the
+  // bright window stops sweeping along it.
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const color = isUp ? "#10b981" : "#ef4444";
   const path = isUp ? PATH_UP : PATH_DOWN;
+  const gradientId = isUp ? "bg-trend-grad-up" : "bg-trend-grad-down";
 
   return (
     <svg
@@ -41,60 +54,51 @@ export function BackgroundTrendLine({ isUp }: { isUp: boolean }) {
         height: "100%",
         pointerEvents: "none",
         zIndex: -10,
-        color,
       }}
     >
       <defs>
-        <filter
-          id="bg-trend-glow"
-          x="-20%"
-          y="-20%"
-          width="140%"
-          height="140%"
+        <linearGradient
+          id={gradientId}
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          y1="0"
+          x2="100"
+          y2="0"
         >
-          <feGaussianBlur stdDeviation="1.4" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+          {/* Five stops: dim on either side of a narrow bright peak.
+              The peak ramps smoothly so the highlight reads as a soft
+              glow rather than a hard edge. */}
+          <stop offset="0" stopColor={color} stopOpacity="0.3" />
+          <stop offset="0.44" stopColor={color} stopOpacity="0.3" />
+          <stop offset="0.5" stopColor={color} stopOpacity="1" />
+          <stop offset="0.56" stopColor={color} stopOpacity="0.3" />
+          <stop offset="1" stopColor={color} stopOpacity="0.3" />
+          {revealed && !reducedMotion && (
+            <animateTransform
+              attributeName="gradientTransform"
+              type="translate"
+              from="-110 0"
+              to="110 0"
+              dur="10s"
+              begin="1.5s"
+              repeatCount="indefinite"
+            />
+          )}
+        </linearGradient>
       </defs>
 
       {revealed && (
-        <>
-          {/* Dim base layer. pathLength={100} normalizes the path so
-              the draw-in math (stroke-dashoffset 100 -> 0) works
-              regardless of how the SVG is stretched to the viewport. */}
-          <path
-            className="bg-trend-dim"
-            d={path}
-            pathLength={100}
-            stroke="currentColor"
-            strokeWidth={0.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-            opacity={0.12}
-            vectorEffect="non-scaling-stroke"
-          />
-
-          {/* Glowing pulse: a short visible segment travels along the
-              path, looping end-to-end every 10 s. Delayed until after
-              the dim line finishes drawing. */}
-          <path
-            className="bg-trend-pulse"
-            d={path}
-            pathLength={100}
-            stroke="currentColor"
-            strokeWidth={0.9}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-            filter="url(#bg-trend-glow)"
-            opacity={0.95}
-            vectorEffect="non-scaling-stroke"
-          />
-        </>
+        <path
+          className="bg-trend-line"
+          d={path}
+          pathLength={100}
+          stroke={`url(#${gradientId})`}
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+          vectorEffect="non-scaling-stroke"
+        />
       )}
     </svg>
   );
