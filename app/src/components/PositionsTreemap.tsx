@@ -97,7 +97,7 @@ function textColorFor(fill: string): string {
   const g = Number(m[2]);
   const b = Number(m[3]);
   const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return lum > 150 ? "#000000" : "#ffffff";
+  return lum > 135 ? "#000000" : "#ffffff";
 }
 
 function Tile(props: TileProps) {
