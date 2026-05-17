@@ -140,7 +140,6 @@ export async function getPerformanceSeriesSince(
        FROM performance_daily p
        LEFT JOIN benchmarks b ON b.symbol = p.symbol
        WHERE p.date >= $1::date
-         AND NOT (p.symbol = 'PORTFOLIO' AND p.value = 0)
          AND p.date IN (
            SELECT DISTINCT date FROM performance_daily WHERE symbol <> 'PORTFOLIO'
          )
@@ -186,7 +185,6 @@ export async function getPerformanceSeries(
          FROM performance_daily p
          LEFT JOIN benchmarks b ON b.symbol = p.symbol
          WHERE ${since}
-           AND NOT (p.symbol = 'PORTFOLIO' AND p.value = 0)
            AND p.date IN (
              SELECT DISTINCT date FROM performance_daily WHERE symbol <> 'PORTFOLIO'
            )

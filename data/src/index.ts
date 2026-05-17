@@ -80,6 +80,23 @@ async function maybeMigrateBenchmarks() {
     await dropBenchmarks(["IWB", "IWM"]);
     await setMeta("dropped_russell_etfs", new Date().toISOString());
   }
+  // Alpaca's portfolioHistory returns 0 for days before the account had
+  // equity, which makes those rows useless as a chart baseline. Overwrite
+  // any $0 portfolio_daily rows with STARTING_EQUITY so "% change since
+  // inception" reflects the actual starting cash balance.
+  if (!(await getMeta("backfilled_pretrade_starting_equity_v2"))) {
+    const startingEquity = Number(process.env.STARTING_EQUITY ?? 10000);
+    const { rowCount } = await db.query(
+      `UPDATE performance_daily
+          SET value = $1
+        WHERE symbol = 'PORTFOLIO' AND value = 0`,
+      [startingEquity],
+    );
+    console.log(
+      `set ${rowCount ?? 0} pre-trade portfolio rows to STARTING_EQUITY=${startingEquity}`,
+    );
+    await setMeta("backfilled_pretrade_starting_equity_v2", new Date().toISOString());
+  }
 }
 
 async function dropBenchmarks(symbols: string[]) {

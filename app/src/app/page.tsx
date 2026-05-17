@@ -32,12 +32,16 @@ export default async function Home() {
     );
   }
 
+  // Use the chart series for the baseline (portfolio value at inception)
+  // but the live summary for the current value, so the % reflects the
+  // most recent equity even on weekends/holidays when the chart series
+  // is filtered to trading days only.
   const portfolioSince = sinceSeries.find((s) => s.symbol === "PORTFOLIO");
   const sincePct = (() => {
-    if (!portfolioSince || portfolioSince.points.length < 2) return null;
-    const first = Number(portfolioSince.points[0].value);
-    const last = Number(portfolioSince.points[portfolioSince.points.length - 1].value);
-    return first ? ((last - first) / first) * 100 : 0;
+    const baseline = Number(portfolioSince?.points[0]?.value ?? 0);
+    const current = Number(summary.portfolio_value);
+    if (!baseline) return null;
+    return ((current - baseline) / baseline) * 100;
   })();
 
   const positive = sincePct == null ? true : sincePct >= 0;
