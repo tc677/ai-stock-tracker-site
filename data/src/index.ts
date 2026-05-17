@@ -123,11 +123,14 @@ async function maybeBackfill() {
 
   // Per-benchmark backfill - each benchmark gets its own marker, so when
   // you add a new benchmark to the seed (or insert a row manually), only
-  // that one gets backfilled on the next puller run.
+  // that one gets backfilled on the next puller run. Sleep between symbols
+  // to avoid tripping Yahoo's rate limit.
   const benchmarkSymbols = await getBenchmarkSymbols();
-  for (const symbol of benchmarkSymbols) {
+  for (let i = 0; i < benchmarkSymbols.length; i++) {
+    const symbol = benchmarkSymbols[i];
     const key = `backfilled_benchmark_${symbol}`;
     if (await getMeta(key)) continue;
+    if (i > 0) await new Promise((r) => setTimeout(r, 1500));
     const start = portfolioStartISO ?? (await earliestPortfolioDateISO());
     console.log(`backfilling benchmark ${symbol} from ${start}...`);
     const bars = await getDailyBars(symbol, start);
@@ -287,15 +290,19 @@ async function getBenchmarkSymbols(): Promise<string[]> {
 }
 
 async function fetchBenchmarks(symbols: string[]) {
-  return Promise.all(
-    symbols.map(async (symbol) => {
-      const [price, ytdPct] = await Promise.all([
-        getQuote(symbol),
-        getYtdReturnPct(symbol),
-      ]);
-      return { symbol, price, ytdPct };
-    }),
-  );
+  // Sequential with small gaps to avoid Yahoo rate limits. Total ~6 calls
+  // for 4 benchmarks at 2 requests each plus the sleeps; well under 10s.
+  const out: { symbol: string; price: number; ytdPct: number }[] = [];
+  for (let i = 0; i < symbols.length; i++) {
+    if (i > 0) await new Promise((r) => setTimeout(r, 750));
+    const symbol = symbols[i];
+    const [price, ytdPct] = await Promise.all([
+      getQuote(symbol),
+      getYtdReturnPct(symbol),
+    ]);
+    out.push({ symbol, price, ytdPct });
+  }
+  return out;
 }
 
 async function upsertDailyValue(date: string, symbol: string, value: number) {
