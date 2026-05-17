@@ -173,12 +173,12 @@ export default async function Home() {
 
   return (
     <div className="space-y-12">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-16">
-        <div className="space-y-32">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-24 gap-y-32">
+        <div className="space-y-64">
           {heroBlock}
           {positionsBlock}
         </div>
-        <div className="space-y-32 lg:mt-32">
+        <div className="space-y-64 lg:mt-64">
           {performanceBlock}
           {activityBlock}
         </div>

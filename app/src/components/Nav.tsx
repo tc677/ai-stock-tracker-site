@@ -1,11 +1,32 @@
+"use client";
+
 import Link from "next/link";
+import { useIntro } from "./Intro";
 
 export function Nav() {
+  const { phase, display, showEmoji } = useIntro();
+  const plopping = phase === "plop";
+
   return (
     <header className="border-b border-zinc-200 dark:border-zinc-800">
       <nav className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-center">
-        <Link href="/" className="font-semibold tracking-tight text-lg">
-          CanMyAITrade 🤔
+        <Link
+          href="/"
+          className="font-semibold tracking-tight text-lg flex items-baseline gap-2"
+        >
+          <span style={{ whiteSpace: "pre" }}>{display}</span>
+          {showEmoji && (
+            <span
+              className="inline-block"
+              style={{
+                animation: plopping
+                  ? "introPlop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both"
+                  : undefined,
+              }}
+            >
+              🤔
+            </span>
+          )}
         </Link>
       </nav>
     </header>
