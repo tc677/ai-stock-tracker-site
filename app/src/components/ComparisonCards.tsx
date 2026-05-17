@@ -1,5 +1,9 @@
+"use client";
+
 import { fmtPct } from "@/lib/format";
 import type { PerformanceSeries } from "@/lib/types";
+import { AnimatedNumber } from "./AnimatedNumber";
+import { useIntro } from "./Intro";
 
 export function ComparisonCards({
   series,
@@ -36,20 +40,26 @@ function Card({
   symbol: string;
   pct: number;
 }) {
+  const { phase } = useIntro();
+  const revealed = phase === "plop" || phase === "done";
   const positive = pct >= 0;
-  const color = positive
+  const finalColor = positive
     ? "text-emerald-600 dark:text-emerald-400"
     : "text-rose-600 dark:text-rose-400";
+  const color = revealed
+    ? finalColor
+    : "text-zinc-400 dark:text-zinc-500";
 
   return (
     <div className="rounded-md border p-2.5 border-zinc-200 dark:border-zinc-800">
       <div className="text-[11px] uppercase tracking-wide text-zinc-500 truncate">
         {label}
       </div>
-      <div className={`mt-1 text-base font-semibold tabular-nums ${color}`}>
-        {positive ? "+" : ""}
-        {fmtPct(pct)}
-      </div>
+      <AnimatedNumber
+        value={pct}
+        format={(n) => `${n >= 0 ? "+" : ""}${fmtPct(n)}`}
+        className={`mt-1 block text-base font-semibold tabular-nums transition-colors duration-1000 ${color}`}
+      />
       {symbol && (
         <div className="mt-0.5 text-[11px] text-zinc-500 tabular-nums">
           {symbol}

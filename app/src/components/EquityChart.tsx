@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import type { PerformanceSeries } from "@/lib/types";
 import { fmtDate, fmtPct } from "@/lib/format";
+import { useIntro } from "./Intro";
 
 const PORTFOLIO_COLOR = "#10b981"; // emerald-500
 // Specific colors per known benchmark; fallback palette for anything else.
@@ -31,6 +32,11 @@ type Row = {
 } & Record<string, number | string>;
 
 export function EquityChart({ series }: { series: PerformanceSeries[] }) {
+  const { phase } = useIntro();
+  // Hold the line draws until the intro hands off to the visible page,
+  // so Recharts' built-in animation runs while the user is actually
+  // looking at the chart.
+  const revealed = phase === "plop" || phase === "done";
   const enough = series.some((s) => s.points.length >= 2);
 
   if (!enough) {
@@ -115,27 +121,32 @@ export function EquityChart({ series }: { series: PerformanceSeries[] }) {
               labelStyle={{ color: "rgb(212 212 216)" }}
               itemStyle={{ color: "rgb(244 244 245)" }}
             />
-            {benchmarks.map((s, i) => (
-              <Line
-                key={s.symbol}
-                type="monotone"
-                dataKey={s.symbol}
-                stroke={colorFor(s.symbol, i)}
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                dot={false}
-                isAnimationActive={false}
-                connectNulls
-              />
-            ))}
-            {portfolio && (
+            {revealed &&
+              benchmarks.map((s, i) => (
+                <Line
+                  key={s.symbol}
+                  type="monotone"
+                  dataKey={s.symbol}
+                  stroke={colorFor(s.symbol, i)}
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  dot={false}
+                  isAnimationActive
+                  animationDuration={2200}
+                  animationEasing="ease-out"
+                  connectNulls
+                />
+              ))}
+            {revealed && portfolio && (
               <Line
                 type="monotone"
                 dataKey="PORTFOLIO"
                 stroke={PORTFOLIO_COLOR}
                 strokeWidth={2.5}
                 dot={false}
-                isAnimationActive={false}
+                isAnimationActive
+                animationDuration={2600}
+                animationEasing="ease-out"
                 connectNulls
               />
             )}

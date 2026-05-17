@@ -1,5 +1,6 @@
 import { ComparisonCards } from "@/components/ComparisonCards";
 import { FilteredChart } from "@/components/FilteredChart";
+import { HeroNumbers } from "@/components/HeroNumbers";
 import { PositionsTreemap } from "@/components/PositionsTreemap";
 import {
   getActivity,
@@ -8,7 +9,7 @@ import {
   getPositions,
   getSummary,
 } from "@/lib/queries";
-import { fmtDate, fmtDateTime, fmtPct, fmtUSD } from "@/lib/format";
+import { fmtDate, fmtDateTime, fmtUSD } from "@/lib/format";
 
 export const revalidate = 10;
 
@@ -44,34 +45,17 @@ export default async function Home() {
     return ((current - baseline) / baseline) * 100;
   })();
 
-  const positive = sincePct == null ? true : sincePct >= 0;
-  const heroColor = positive
-    ? "text-emerald-600 dark:text-emerald-400"
-    : "text-rose-600 dark:text-rose-400";
-
   const heroBlock = (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold tracking-tight">Overview</h2>
       <div className="text-sm font-medium text-zinc-500 mb-1">
         Portfolio value
       </div>
-      <div className="flex items-baseline gap-3 flex-wrap">
-        <span className={`text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums ${heroColor}`}>
-          {fmtUSD(summary.portfolio_value)}
-        </span>
-        {sincePct != null && (
-          <span className={`text-lg font-medium tabular-nums ${heroColor}`}>
-            {positive ? "+" : ""}
-            {fmtPct(sincePct)}
-          </span>
-        )}
-      </div>
-      <div className="mt-4">
-        <div className="text-sm font-medium text-zinc-500">Cash</div>
-        <div className="text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-          {fmtUSD(summary.cash)}
-        </div>
-      </div>
+      <HeroNumbers
+        portfolioValue={Number(summary.portfolio_value)}
+        cash={Number(summary.cash)}
+        sincePct={sincePct}
+      />
       {inceptionDate && (
         <div className="mt-6 space-y-3">
           <h2 className="text-sm font-medium text-zinc-500">
