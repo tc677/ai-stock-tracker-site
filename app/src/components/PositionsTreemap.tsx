@@ -32,7 +32,7 @@ export function PositionsTreemap({ positions }: { positions: Position[] }) {
           data={data}
           dataKey="size"
           nameKey="name"
-          stroke="#18181b"
+          stroke="none"
           isAnimationActive={false}
           content={<Tile />}
         >
@@ -95,8 +95,8 @@ function Tile(props: TileProps) {
   const fill = fillFor(pct);
   const showLabel = width > 36 && height > 24;
   const showPct = width > 60 && height > 44;
-  const symbolSize = Math.min(28, Math.max(13, Math.min(width, height) / 3.5));
-  const pctSize = Math.min(16, Math.max(11, symbolSize * 0.55));
+  const symbolSize = Math.min(40, Math.max(16, Math.min(width, height) / 2.8));
+  const pctSize = Math.min(22, Math.max(13, symbolSize * 0.6));
 
   return (
     <g>
@@ -105,17 +105,17 @@ function Tile(props: TileProps) {
         y={y}
         width={width}
         height={height}
-        style={{ fill, stroke: "#18181b", strokeWidth: 2 }}
+        style={{ fill, stroke: "none" }}
       />
       {showLabel && (
         <text
           x={x + width / 2}
-          y={y + height / 2 - (showPct ? symbolSize * 0.4 : 0)}
+          y={y + height / 2 - (showPct ? symbolSize * 0.45 : 0)}
           textAnchor="middle"
           dominantBaseline="middle"
           fill="#ffffff"
           fontSize={symbolSize}
-          fontWeight={700}
+          fontWeight={900}
         >
           {name}
         </text>
@@ -127,9 +127,8 @@ function Tile(props: TileProps) {
           textAnchor="middle"
           dominantBaseline="middle"
           fill="#ffffff"
-          opacity={0.85}
           fontSize={pctSize}
-          fontWeight={500}
+          fontWeight={800}
         >
           {pct >= 0 ? "+" : ""}
           {fmtPct(pct)}
