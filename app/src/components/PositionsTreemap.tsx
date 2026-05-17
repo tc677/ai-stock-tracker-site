@@ -89,10 +89,22 @@ type TileProps = {
   plPct?: number;
 };
 
+// Black or white based on tile luminance (Rec. 709 weights).
+function textColorFor(fill: string): string {
+  const m = fill.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (!m) return "#ffffff";
+  const r = Number(m[1]);
+  const g = Number(m[2]);
+  const b = Number(m[3]);
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return lum > 150 ? "#000000" : "#ffffff";
+}
+
 function Tile(props: TileProps) {
   const { x = 0, y = 0, width = 0, height = 0, name = "", payload } = props;
   const pct = payload?.plPct ?? props.plPct ?? 0;
   const fill = fillFor(pct);
+  const textColor = textColorFor(fill);
   const showLabel = width > 36 && height > 24;
   const showPct = width > 60 && height > 44;
   const symbolSize = Math.min(40, Math.max(16, Math.min(width, height) / 2.8));
@@ -113,7 +125,7 @@ function Tile(props: TileProps) {
           y={y + height / 2 - (showPct ? symbolSize * 0.45 : 0)}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill="#ffffff"
+          fill={textColor}
           fontSize={symbolSize}
           fontWeight={400}
         >
@@ -126,7 +138,7 @@ function Tile(props: TileProps) {
           y={y + height / 2 + symbolSize * 0.6}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill="#ffffff"
+          fill={textColor}
           fontSize={pctSize}
           fontWeight={400}
         >
