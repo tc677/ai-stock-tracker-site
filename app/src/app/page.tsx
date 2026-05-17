@@ -2,7 +2,8 @@ import { ComparisonCards } from "@/components/ComparisonCards";
 import { FilteredChart } from "@/components/FilteredChart";
 import { HeroNumbers } from "@/components/HeroNumbers";
 import { PositionsTreemap } from "@/components/PositionsTreemap";
-import { TopbarRight } from "@/components/TopbarRight";
+import { FooterTimestamp } from "@/components/FooterTimestamp";
+import { MarketBackdrop } from "@/components/MarketBackdrop";
 import {
   getActivity,
   getInceptionDate,
@@ -168,16 +169,13 @@ export default async function Home() {
 
   return (
     <div className="space-y-12">
-      <TopbarRight>Updated {fmtDateTime(summary.updated_at)}</TopbarRight>
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-x-40 gap-y-48">
-        <div className="space-y-96">
-          {heroBlock}
-          {positionsBlock}
-        </div>
-        <div className="space-y-96 lg:mt-96">
-          {performanceBlock}
-          {activityBlock}
-        </div>
+      <MarketBackdrop up={(sincePct ?? 0) >= 0} />
+      <FooterTimestamp>Updated {fmtDateTime(summary.updated_at)}.</FooterTimestamp>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-24 gap-y-24">
+        {heroBlock}
+        {performanceBlock}
+        {positionsBlock}
+        {activityBlock}
       </div>
 
     </div>

@@ -16,7 +16,7 @@ export function Nav() {
           : "border-zinc-200 dark:border-zinc-800"
       }`}
     >
-      <nav className="max-w-5xl mx-auto px-4 py-4 flex items-baseline justify-between gap-4">
+      <nav className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-center">
         <Link
           href="/"
           className="font-semibold tracking-tight text-lg flex items-baseline gap-2"
@@ -35,10 +35,6 @@ export function Nav() {
             </span>
           )}
         </Link>
-        <div
-          id="topbar-right-slot"
-          className="text-sm text-zinc-500 tabular-nums"
-        />
       </nav>
     </header>
   );
