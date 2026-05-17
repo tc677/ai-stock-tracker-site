@@ -63,6 +63,6 @@ variable "starting_equity" {
 
 variable "puller_schedule" {
   type        = string
-  default     = "cron(* 13-21 ? * MON-FRI *)"
-  description = "EventBridge Scheduler expression for the puller. Default fires every minute Mon-Fri during a UTC window that covers US market hours in both EST and EDT. Use 'rate(N minutes)' for simpler always-on schedules."
+  default     = "cron(*/5 13-21 ? * MON-FRI *)"
+  description = "EventBridge Scheduler expression for the puller. Default fires every 5 min Mon-Fri during a UTC window that covers US market hours in both EST and EDT. Drop to 'cron(* 13-21 ? * MON-FRI *)' if you want 1-min granularity (and watch Yahoo's rate limit)."
 }
