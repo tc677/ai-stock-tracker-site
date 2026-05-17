@@ -39,27 +39,28 @@ body[data-intro="zoom"] footer {
 }
 
 /* Background trend line — draw-in.
-   The single path is drawn left-to-right by animating its full-length
-   dasharray's offset from 100 -> 0 over 1.5 s. Runs concurrently with
-   the hero number tween and color fade so the page comes alive in a
-   single beat. After it completes the line stays fully drawn and the
-   gradient sweep takes over to provide the moving glow. */
-.bg-trend-line {
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  animation: bgTrendDraw 1500ms ease-out forwards;
+   The path is fully drawn at all times; a clipPath rect scales from
+   left to right to reveal it. Using a clip-path instead of stroke
+   dasharray avoids a sub-pixel gap at the right edge that the
+   non-scaling-stroke + pathLength combination produced, and replays
+   cleanly whenever the rect mounts (e.g. after the intro hands off). */
+.bg-trend-reveal {
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transform-box: fill-box;
+  animation: bgTrendReveal 1500ms ease-out forwards;
 }
 
-@keyframes bgTrendDraw {
+@keyframes bgTrendReveal {
   to {
-    stroke-dashoffset: 0;
+    transform: scaleX(1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bg-trend-line {
+  .bg-trend-reveal {
     animation: none;
-    stroke-dashoffset: 0;
+    transform: scaleX(1);
   }
 }
 

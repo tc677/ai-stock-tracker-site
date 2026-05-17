@@ -7,13 +7,14 @@ import { useIntro } from "./Intro";
 // behind the dashboard. Color and direction follow the portfolio
 // trend (emerald rising on up days, rose falling on down days).
 //
-// To get ONE physical stroke (not an overlay) that has a single glow
-// passing through it, the stroke is painted with a horizontal SVG
-// linearGradient. Most of the gradient sits at the dim opacity, but a
-// narrow window in the middle ramps up to full brightness. An SVG
-// animateTransform slides the entire gradient from off-the-left-edge
-// to off-the-right-edge over 10s and loops, so the bright window
-// travels end-to-end through the line.
+// The stroke is painted with a horizontal linearGradient that's mostly
+// dim with a bright peak in the middle, and an animateTransform slides
+// the gradient end-to-end so the bright window travels along the line.
+//
+// Draw-in uses a clipPath that scales a rect from 0 -> full width
+// (rather than stroke-dasharray, which combined with non-scaling-stroke
+// and pathLength left a sub-pixel gap at the end and didn't always
+// replay cleanly when the path was conditionally mounted).
 
 const PATH_UP =
   "M 0 90 L 8 82 L 16 86 L 25 72 L 33 78 L 42 60 L 50 68 L 58 50 L 67 56 L 75 38 L 83 44 L 92 24 L 100 18";
@@ -41,6 +42,7 @@ export function BackgroundTrendLine({ isUp }: { isUp: boolean }) {
   const color = isUp ? "#10b981" : "#ef4444";
   const path = isUp ? PATH_UP : PATH_DOWN;
   const gradientId = isUp ? "bg-trend-grad-up" : "bg-trend-grad-down";
+  const clipId = isUp ? "bg-trend-clip-up" : "bg-trend-clip-down";
 
   return (
     <svg
@@ -85,19 +87,33 @@ export function BackgroundTrendLine({ isUp }: { isUp: boolean }) {
             />
           )}
         </linearGradient>
+        {/* Draw-in mask: a rect that scales from 0 -> full width
+            across the viewBox once the intro has handed off. The
+            path itself is always fully drawn, so there are no
+            dasharray gaps at the right edge. */}
+        <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
+          {revealed && (
+            <rect
+              className="bg-trend-reveal"
+              x="0"
+              y="0"
+              width="100"
+              height="100"
+            />
+          )}
+        </clipPath>
       </defs>
 
       {revealed && (
         <path
-          className="bg-trend-line"
           d={path}
-          pathLength={100}
           stroke={`url(#${gradientId})`}
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
           vectorEffect="non-scaling-stroke"
+          clipPath={`url(#${clipId})`}
         />
       )}
     </svg>
