@@ -21,10 +21,10 @@ const PATH_DOWN =
 
 export function BackgroundTrendLine({ isUp }: { isUp: boolean }) {
   const { phase } = useIntro();
-  // Hide behind the intro's black backdrop, then fade in alongside
-  // main/footer during the zoom-out so the whole page settles together.
-  const inDecrypt = phase === "decrypt";
-  const inZoom = phase === "zoom";
+  // The line draws itself and the pulse starts only once the page has
+  // handed off from the intro — same trigger as the number tween and
+  // color fade, so they all animate in together.
+  const revealed = phase === "plop" || phase === "done";
 
   const color = isUp ? "#10b981" : "#ef4444";
   const path = isUp ? PATH_UP : PATH_DOWN;
@@ -42,8 +42,6 @@ export function BackgroundTrendLine({ isUp }: { isUp: boolean }) {
         pointerEvents: "none",
         zIndex: -10,
         color,
-        opacity: inDecrypt ? 0 : 1,
-        transition: inZoom ? "opacity 1300ms ease-out" : undefined,
       }}
     >
       <defs>
@@ -62,34 +60,42 @@ export function BackgroundTrendLine({ isUp }: { isUp: boolean }) {
         </filter>
       </defs>
 
-      {/* Dim base layer — always visible, defines the line itself. */}
-      <path
-        d={path}
-        stroke="currentColor"
-        strokeWidth={0.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-        opacity={0.12}
-        vectorEffect="non-scaling-stroke"
-      />
+      {revealed && (
+        <>
+          {/* Dim base layer. pathLength={100} normalizes the path so
+              the draw-in math (stroke-dashoffset 100 -> 0) works
+              regardless of how the SVG is stretched to the viewport. */}
+          <path
+            className="bg-trend-dim"
+            d={path}
+            pathLength={100}
+            stroke="currentColor"
+            strokeWidth={0.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+            opacity={0.12}
+            vectorEffect="non-scaling-stroke"
+          />
 
-      {/* Glowing pulse: a short visible dash travels along the path.
-          pathLength={100} normalizes the path so the dash math is the
-          same regardless of how the SVG is stretched to fit the page. */}
-      <path
-        className="bg-trend-pulse"
-        d={path}
-        pathLength={100}
-        stroke="currentColor"
-        strokeWidth={0.9}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-        filter="url(#bg-trend-glow)"
-        opacity={0.95}
-        vectorEffect="non-scaling-stroke"
-      />
+          {/* Glowing pulse: a short visible segment travels along the
+              path, looping end-to-end every 10 s. Delayed until after
+              the dim line finishes drawing. */}
+          <path
+            className="bg-trend-pulse"
+            d={path}
+            pathLength={100}
+            stroke="currentColor"
+            strokeWidth={0.9}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+            filter="url(#bg-trend-glow)"
+            opacity={0.95}
+            vectorEffect="non-scaling-stroke"
+          />
+        </>
+      )}
     </svg>
   );
 }

@@ -38,30 +38,48 @@ body[data-intro="zoom"] footer {
   transition: opacity 1300ms ease-out;
 }
 
-/* Background trend line pulse: a short visible dash (8% of the
-   normalized path length) travels along the chart line from start to
-   end during the first ~35% of each 5 s cycle, then sits invisible
-   for the rest of the cycle so the pulse reads as a discrete event
-   rather than a continuous sweep. */
+/* Background trend line — draw-in.
+   When the dim line first mounts (after the intro hands off) the path
+   is drawn left-to-right by animating its full-length dasharray's
+   offset from 100 -> 0 over 1.5 s. After this completes the line
+   stays at full visibility. Runs concurrently with the hero number
+   tween and color fade so the page comes alive in a single beat. */
+.bg-trend-dim {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: bgTrendDraw 1500ms ease-out forwards;
+}
+
+@keyframes bgTrendDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Background trend line — glow pulse.
+   A short (8% of the normalized path length) visible segment loops
+   end-to-end every 10 s. animation-delay matches the draw-in so the
+   pulse doesn't appear until the line is fully drawn. */
 .bg-trend-pulse {
   stroke-dasharray: 8 200;
   stroke-dashoffset: 8;
-  animation: bgTrendSweep 5s ease-in-out infinite;
+  animation: bgTrendSweep 10s linear 1500ms infinite;
 }
 
 @keyframes bgTrendSweep {
-  0% {
+  from {
     stroke-dashoffset: 8;
   }
-  35% {
-    stroke-dashoffset: -100;
-  }
-  100% {
+  to {
     stroke-dashoffset: -100;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .bg-trend-dim {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
   .bg-trend-pulse {
     animation: none;
     opacity: 0;
