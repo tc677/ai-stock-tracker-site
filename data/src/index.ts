@@ -80,6 +80,23 @@ async function maybeMigrateBenchmarks() {
     await dropBenchmarks(["IWB", "IWM"]);
     await setMeta("dropped_russell_etfs", new Date().toISOString());
   }
+  // Purge any Saturday/Sunday rows. They shouldn't exist (market closed)
+  // but earlier puller versions wrote weekend rows from carried-forward
+  // Alpaca values. Going forward, backfill skips weekends and live pulls
+  // are gated by Alpaca's clock.is_open.
+  if (!(await getMeta("dropped_weekend_rows"))) {
+    const daily = await db.query(
+      `DELETE FROM performance_daily WHERE EXTRACT(DOW FROM date) IN (0, 6)`,
+    );
+    const intraday = await db.query(
+      `DELETE FROM performance_intraday
+        WHERE EXTRACT(DOW FROM (ts AT TIME ZONE 'America/New_York')) IN (0, 6)`,
+    );
+    console.log(
+      `dropped weekend rows: ${daily.rowCount ?? 0} daily, ${intraday.rowCount ?? 0} intraday`,
+    );
+    await setMeta("dropped_weekend_rows", new Date().toISOString());
+  }
   // Alpaca's portfolioHistory returns 0 for days before the account had
   // equity, which makes those rows useless as a chart baseline. Overwrite
   // any $0 portfolio_daily rows with STARTING_EQUITY so "% change since
@@ -131,6 +148,10 @@ async function maybeBackfill() {
       const date = new Date(history.timestamp[i] * 1000)
         .toLocaleString("en-CA", { timeZone: "America/New_York" })
         .slice(0, 10);
+      // Skip weekends — Alpaca sometimes carries a value into Sat/Sun
+      // rows and we want the chart to only show market-open days.
+      const dow = new Date(date + "T12:00:00Z").getUTCDay();
+      if (dow === 0 || dow === 6) continue;
       await db.query(
         `INSERT INTO performance_daily (date, symbol, value)
          VALUES ($1, 'PORTFOLIO', $2)
