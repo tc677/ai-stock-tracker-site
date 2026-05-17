@@ -43,7 +43,8 @@ jobs:
   web:
     needs: detect
     if: github.event_name == 'workflow_dispatch' && (inputs.target == 'web' || inputs.target == 'both') || (github.event_name == 'push' && needs.detect.outputs.web == 'true')
-    runs-on: ubuntu-latest
+    # ARM-native runner: no QEMU emulation, native speed, no random flakes.
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
 
@@ -52,12 +53,6 @@ jobs:
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Set up QEMU (for cross-arch builds)
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Login to ECR
         id: ecr
@@ -68,7 +63,7 @@ jobs:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
           REPO="$REGISTRY/stock-dashboard/web"
-          docker build --platform linux/arm64 -t "$REPO:${{ github.sha }}" -t "$REPO:latest" ./app
+          docker build -t "$REPO:${{ github.sha }}" -t "$REPO:latest" ./app
           docker push "$REPO:${{ github.sha }}"
           docker push "$REPO:latest"
 
@@ -86,7 +81,7 @@ jobs:
   puller:
     needs: detect
     if: github.event_name == 'workflow_dispatch' && (inputs.target == 'puller' || inputs.target == 'both') || (github.event_name == 'push' && needs.detect.outputs.puller == 'true')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
 
@@ -95,12 +90,6 @@ jobs:
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Set up QEMU (for cross-arch builds)
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Login to ECR
         id: ecr
@@ -111,7 +100,7 @@ jobs:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
           REPO="$REGISTRY/stock-dashboard/puller"
-          docker build --platform linux/arm64 -t "$REPO:${{ github.sha }}" -t "$REPO:latest" ./data
+          docker build -t "$REPO:${{ github.sha }}" -t "$REPO:latest" ./data
           docker push "$REPO:${{ github.sha }}"
           docker push "$REPO:latest"
           # The EventBridge schedule pulls :latest on the next run — no
