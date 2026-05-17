@@ -28,10 +28,15 @@ export const fmtDate = (s: string | Date) =>
     timeZone: TIMEZONE,
   });
 
+// Can't combine dateStyle/timeStyle with timeZoneName per the Intl spec,
+// so we spell out the full option set when we want the timezone label.
 export const fmtDateTime = (s: string | Date) =>
   new Date(s).toLocaleString("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
     timeZone: TIMEZONE,
     timeZoneName: "short",
   });
