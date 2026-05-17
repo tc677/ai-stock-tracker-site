@@ -173,7 +173,7 @@ export default async function Home() {
 
   return (
     <div className="space-y-12">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-24 gap-y-32">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-40 gap-y-32">
         <div className="space-y-64">
           {heroBlock}
           {positionsBlock}
