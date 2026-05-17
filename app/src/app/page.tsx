@@ -117,12 +117,12 @@ export default async function Home() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-[10px] uppercase tracking-[0.12em] text-zinc-500 border-b border-zinc-200 dark:border-zinc-800">
-                <th className="px-5 py-3 font-medium">When</th>
-                <th className="px-5 py-3 font-medium">Symbol</th>
-                <th className="px-5 py-3 font-medium">Side</th>
-                <th className="px-5 py-3 font-medium text-right">Qty</th>
-                <th className="px-5 py-3 font-medium text-right">Price</th>
-                <th className="px-5 py-3 font-medium text-right">Total</th>
+                <th className="px-4 py-2 font-medium">When</th>
+                <th className="px-4 py-2 font-medium">Symbol</th>
+                <th className="px-4 py-2 font-medium">Side</th>
+                <th className="px-4 py-2 font-medium text-right">Qty</th>
+                <th className="px-4 py-2 font-medium text-right">Price</th>
+                <th className="px-4 py-2 font-medium text-right">Total</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
@@ -131,13 +131,13 @@ export default async function Home() {
                   key={a.id}
                   className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                 >
-                  <td className="px-5 py-3 text-zinc-500 tabular-nums">
+                  <td className="px-4 py-2 text-zinc-500 tabular-nums">
                     {fmtDateTime(a.filled_at)}
                   </td>
-                  <td className="px-5 py-3 font-semibold tracking-tight">
+                  <td className="px-4 py-2 font-semibold tracking-tight">
                     {a.symbol}
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-2">
                     <span
                       className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${
                         a.side === "buy"
@@ -148,13 +148,13 @@ export default async function Home() {
                       {a.side}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                  <td className="px-4 py-2 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
                     {a.qty}
                   </td>
-                  <td className="px-5 py-3 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                  <td className="px-4 py-2 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
                     {fmtUSD(a.price)}
                   </td>
-                  <td className="px-5 py-3 text-right tabular-nums font-medium">
+                  <td className="px-4 py-2 text-right tabular-nums font-medium">
                     {fmtUSD(a.qty * a.price)}
                   </td>
                 </tr>
@@ -169,7 +169,7 @@ export default async function Home() {
   return (
     <div className="space-y-12">
       <TopbarRight>Updated {fmtDateTime(summary.updated_at)}</TopbarRight>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-40 gap-y-48">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-x-40 gap-y-48">
         <div className="space-y-96">
           {heroBlock}
           {positionsBlock}

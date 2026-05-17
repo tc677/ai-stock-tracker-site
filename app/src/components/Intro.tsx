@@ -45,6 +45,10 @@ function randomChar() {
 export function IntroProvider({ children }: { children: React.ReactNode }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [display, setDisplay] = useState(" ".repeat(TARGET.length));
+  // Pixel coords (in page space) of the nav title's center, used as the
+  // scale's transform-origin so the giant title stays anchored to where
+  // the small title actually lives.
+  const [origin, setOrigin] = useState<string>("50% 0");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -52,6 +56,15 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
       setPhase("done");
       return;
     }
+
+    const titleEl = document.querySelector('header a[href="/"]');
+    if (titleEl) {
+      const rect = titleEl.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      setOrigin(`${cx}px ${cy}px`);
+    }
+
     sessionStorage.setItem("introPlayed", "1");
     setPhase("decrypt");
   }, []);
@@ -140,7 +153,7 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
   const wrapperStyle: CSSProperties = inWrapperScale
     ? {
         transform: zooming ? "scale(1)" : `scale(${ZOOM_SCALE})`,
-        transformOrigin: "50% 0",
+        transformOrigin: origin,
         transition: zooming
           ? `transform ${ZOOM_DURATION}ms cubic-bezier(0.7, 0, 0.3, 1)`
           : "none",
