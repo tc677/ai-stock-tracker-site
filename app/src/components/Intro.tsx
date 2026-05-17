@@ -36,7 +36,10 @@ const HOLD_AFTER_DECRYPT = 700;
 const ZOOM_DURATION = 1300;
 const HOLD_AFTER_ZOOM = 250;
 const PLOP_DURATION = 600;
-const ZOOM_SCALE = 6;
+// Default scale when we can't compute one yet. Real scale is computed
+// per-viewport on mount so the giant title stays a reasonable size on
+// both phones and desktops.
+const DEFAULT_SCALE = 6;
 
 function randomChar() {
   return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
@@ -45,10 +48,15 @@ function randomChar() {
 export function IntroProvider({ children }: { children: React.ReactNode }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [display, setDisplay] = useState(" ".repeat(TARGET.length));
-  // Pixel coords (in page space) of the nav title's center, used as the
-  // scale's transform-origin so the giant title stays anchored to where
-  // the small title actually lives.
-  const [origin, setOrigin] = useState<string>("50% 0");
+  // Computed on mount: pixel transform-origin (in page space) at the
+  // title's natural center, a vertical translate that positions the
+  // scaled-up title in the middle of the viewport, and a scale factor
+  // sized for the viewport width.
+  const [intro, setIntro] = useState<{
+    origin: string;
+    translateY: number;
+    scale: number;
+  }>({ origin: "50% 0", translateY: 0, scale: DEFAULT_SCALE });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -61,11 +69,25 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
     if (titleEl) {
       const rect = titleEl.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
-      // Anchor at the title's top edge, not its center, so the
-      // scaled-up title extends *downward* from its natural y and
-      // never gets clipped at the top of the viewport.
-      const cy = rect.top;
-      setOrigin(`${cx}px ${cy}px`);
+      const cy = rect.top + rect.height / 2;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      // Pick a scale that keeps the giant title comfortably inside the
+      // viewport. The title is ~140px wide at the nav's text-lg size; we
+      // want it to occupy ~75% of the viewport width during the giant
+      // phase. Clamp between 2.8 and 7 so the effect still feels dramatic
+      // on every screen size.
+      const scale = Math.max(2.8, Math.min(7, (vw * 0.75) / rect.width));
+
+      // Anchor the scale at the title's natural center so it stays put
+      // during the size change. Then translate the whole wrapper so the
+      // title's center lands at the viewport's vertical midpoint.
+      setIntro({
+        origin: `${cx}px ${cy}px`,
+        translateY: vh / 2 - cy,
+        scale,
+      });
     }
 
     sessionStorage.setItem("introPlayed", "1");
@@ -157,8 +179,14 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
 
   const wrapperStyle: CSSProperties = inWrapperScale
     ? {
-        transform: zooming ? "scale(1)" : `scale(${ZOOM_SCALE})`,
-        transformOrigin: origin,
+        // Giant phase: translate the wrapper so the title's center
+        // lands at viewport center, then scale up. Zoom phase: animate
+        // both back to identity, so the title slides up to its real
+        // nav position while shrinking.
+        transform: zooming
+          ? "translateY(0px) scale(1)"
+          : `translateY(${intro.translateY}px) scale(${intro.scale})`,
+        transformOrigin: intro.origin,
         transition: zooming
           ? `transform ${ZOOM_DURATION}ms cubic-bezier(0.7, 0, 0.3, 1)`
           : "none",

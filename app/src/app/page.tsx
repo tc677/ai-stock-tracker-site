@@ -2,8 +2,8 @@ import { ComparisonCards } from "@/components/ComparisonCards";
 import { FilteredChart } from "@/components/FilteredChart";
 import { HeroNumbers } from "@/components/HeroNumbers";
 import { PositionsTreemap } from "@/components/PositionsTreemap";
+import { BackgroundTrendLine } from "@/components/BackgroundTrendLine";
 import { FooterTimestamp } from "@/components/FooterTimestamp";
-import { MarketBackdrop } from "@/components/MarketBackdrop";
 import {
   getActivity,
   getInceptionDate,
@@ -93,7 +93,7 @@ export default async function Home() {
           <div className="flex items-center gap-3 text-xs text-zinc-500">
             <span>≤ -10%</span>
             <span
-              className="inline-block h-3 w-48 rounded-sm"
+              className="inline-block h-3 w-32 sm:w-48 rounded-sm"
               style={{
                 background:
                   "linear-gradient(to right, rgb(185,28,28), rgb(248,113,113), rgb(82,82,91), rgb(74,222,128), rgb(21,128,61))",
@@ -169,9 +169,9 @@ export default async function Home() {
 
   return (
     <div className="space-y-12">
-      <MarketBackdrop up={(sincePct ?? 0) >= 0} />
+      <BackgroundTrendLine isUp={(sincePct ?? 0) >= 0} />
       <FooterTimestamp>Updated {fmtDateTime(summary.updated_at)}.</FooterTimestamp>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-24 gap-y-24">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12 sm:gap-y-16 lg:gap-x-24 lg:gap-y-24">
         {heroBlock}
         {performanceBlock}
         {positionsBlock}
