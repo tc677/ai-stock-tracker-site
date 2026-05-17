@@ -46,7 +46,7 @@ export function PositionsTreemap({
   }
 
   return (
-    <div className="h-[26rem] sm:h-[32rem]">
+    <div className="h-[16rem] sm:h-[20rem]">
       <ResponsiveContainer width="100%" height="100%">
         <Treemap
           data={data}

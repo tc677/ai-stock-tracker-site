@@ -2,6 +2,7 @@ import { ComparisonCards } from "@/components/ComparisonCards";
 import { FilteredChart } from "@/components/FilteredChart";
 import { HeroNumbers } from "@/components/HeroNumbers";
 import { PositionsTreemap } from "@/components/PositionsTreemap";
+import { TopbarRight } from "@/components/TopbarRight";
 import {
   getActivity,
   getInceptionDate,
@@ -112,38 +113,48 @@ export default async function Home() {
           No trades yet.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-zinc-50 dark:bg-zinc-900 text-left">
-              <tr>
-                <th className="px-4 py-2 font-medium">When</th>
-                <th className="px-4 py-2 font-medium">Symbol</th>
-                <th className="px-4 py-2 font-medium">Side</th>
-                <th className="px-4 py-2 font-medium text-right">Qty</th>
-                <th className="px-4 py-2 font-medium text-right">Price</th>
-                <th className="px-4 py-2 font-medium text-right">Total</th>
+            <thead>
+              <tr className="text-left text-[10px] uppercase tracking-[0.12em] text-zinc-500 border-b border-zinc-200 dark:border-zinc-800">
+                <th className="px-5 py-3 font-medium">When</th>
+                <th className="px-5 py-3 font-medium">Symbol</th>
+                <th className="px-5 py-3 font-medium">Side</th>
+                <th className="px-5 py-3 font-medium text-right">Qty</th>
+                <th className="px-5 py-3 font-medium text-right">Price</th>
+                <th className="px-5 py-3 font-medium text-right">Total</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
               {activity.map((a) => (
                 <tr
                   key={a.id}
-                  className="border-t border-zinc-200 dark:border-zinc-800"
+                  className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                 >
-                  <td className="px-4 py-2">{fmtDateTime(a.filled_at)}</td>
-                  <td className="px-4 py-2 font-medium">{a.symbol}</td>
-                  <td
-                    className={`px-4 py-2 uppercase text-xs font-semibold ${
-                      a.side === "buy"
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-rose-600 dark:text-rose-400"
-                    }`}
-                  >
-                    {a.side}
+                  <td className="px-5 py-3 text-zinc-500 tabular-nums">
+                    {fmtDateTime(a.filled_at)}
                   </td>
-                  <td className="px-4 py-2 text-right">{a.qty}</td>
-                  <td className="px-4 py-2 text-right">{fmtUSD(a.price)}</td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-5 py-3 font-semibold tracking-tight">
+                    {a.symbol}
+                  </td>
+                  <td className="px-5 py-3">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${
+                        a.side === "buy"
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
+                          : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400"
+                      }`}
+                    >
+                      {a.side}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                    {a.qty}
+                  </td>
+                  <td className="px-5 py-3 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                    {fmtUSD(a.price)}
+                  </td>
+                  <td className="px-5 py-3 text-right tabular-nums font-medium">
                     {fmtUSD(a.qty * a.price)}
                   </td>
                 </tr>
@@ -157,6 +168,7 @@ export default async function Home() {
 
   return (
     <div className="space-y-12">
+      <TopbarRight>Updated {fmtDateTime(summary.updated_at)}</TopbarRight>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-40 gap-y-48">
         <div className="space-y-96">
           {heroBlock}
@@ -168,9 +180,6 @@ export default async function Home() {
         </div>
       </div>
 
-      <section className="border-t border-zinc-200 dark:border-zinc-800 pt-4 text-sm text-zinc-500 text-right">
-        Updated {fmtDateTime(summary.updated_at)}
-      </section>
     </div>
   );
 }
