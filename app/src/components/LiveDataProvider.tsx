@@ -21,6 +21,7 @@ export type LiveSnapshot = {
   sinceSeries: PerformanceSeries[];
   priorClose: number | null;
   inceptionDate: string | null;
+  todaySeries: { t: string; value: number }[];
 };
 
 type Ctx = {

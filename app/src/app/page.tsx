@@ -5,6 +5,7 @@ import {
   LiveDataProvider,
   type LiveSnapshot,
 } from "@/components/LiveDataProvider";
+import { LiveIntradayChart } from "@/components/LiveIntradayChart";
 import { LiveLeaderboard } from "@/components/LiveLeaderboard";
 import { LiveOverview } from "@/components/LiveOverview";
 import { LivePositionSpotlight } from "@/components/LivePositionSpotlight";
@@ -12,6 +13,7 @@ import { LivePositionsTreemap } from "@/components/LivePositionsTreemap";
 import {
   getActivity,
   getInceptionDate,
+  getIntradayPortfolioToday,
   getPerformanceSeriesSince,
   getPositions,
   getPriorPortfolioClose,
@@ -22,13 +24,14 @@ import { fmtDate } from "@/lib/format";
 export const revalidate = 10;
 
 export default async function Home() {
-  const [summary, inceptionDate, positions, activity, priorClose] =
+  const [summary, inceptionDate, positions, activity, priorClose, todaySeries] =
     await Promise.all([
       getSummary().catch(() => null),
       getInceptionDate().catch(() => null),
       getPositions().catch(() => []),
       getActivity(100).catch(() => []),
       getPriorPortfolioClose().catch(() => null),
+      getIntradayPortfolioToday().catch(() => []),
     ]);
 
   if (!summary) {
@@ -57,6 +60,7 @@ export default async function Home() {
     sinceSeries,
     priorClose,
     inceptionDate,
+    todaySeries,
   };
 
   const heroBlock = (
@@ -84,12 +88,24 @@ export default async function Home() {
   );
 
   const performanceBlock = inceptionDate && sinceSeries.length > 0 && (
-    <section className="space-y-3">
+    <section className="space-y-3 lg:col-span-2">
       <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
         <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> performance
       </h2>
       <p className="text-sm text-zinc-500">Since {fmtDate(inceptionDate)}</p>
       <LiveChart />
+    </section>
+  );
+
+  const todayBlock = (
+    <section className="space-y-3">
+      <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
+        <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> today
+      </h2>
+      <p className="text-sm text-zinc-500">
+        Intraday portfolio change vs yesterday&rsquo;s close.
+      </p>
+      <LiveIntradayChart />
     </section>
   );
 
@@ -138,6 +154,7 @@ export default async function Home() {
       <div className="space-y-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12 sm:gap-y-16 lg:gap-x-24 lg:gap-y-24">
           {heroBlock}
+          {todayBlock}
           {performanceBlock}
           {leaderboardBlock}
           {positionsBlock}

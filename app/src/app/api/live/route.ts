@@ -1,6 +1,7 @@
 import {
   getActivity,
   getInceptionDate,
+  getIntradayPortfolioToday,
   getPerformanceSeriesSince,
   getPositions,
   getPriorPortfolioClose,
@@ -14,13 +15,14 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const [summary, inceptionDate, positions, activity, priorClose] =
+  const [summary, inceptionDate, positions, activity, priorClose, todaySeries] =
     await Promise.all([
       getSummary().catch(() => null),
       getInceptionDate().catch(() => null),
       getPositions().catch(() => []),
       getActivity(100).catch(() => []),
       getPriorPortfolioClose().catch(() => null),
+      getIntradayPortfolioToday().catch(() => []),
     ]);
 
   if (!summary) {
@@ -43,6 +45,7 @@ export async function GET() {
       sinceSeries,
       priorClose,
       inceptionDate,
+      todaySeries,
     },
     { headers: { "cache-control": "no-store" } },
   );

@@ -138,6 +138,22 @@ export async function getInceptionDate(): Promise<string | null> {
   return rows[0]?.date ?? null;
 }
 
+// Intraday PORTFOLIO points for the current ET trading day. Drives the
+// "Today" live chart. Empty array on pre-open or pre-puller-run days.
+export async function getIntradayPortfolioToday(): Promise<
+  { t: string; value: number }[]
+> {
+  const { rows } = await db.query<{ t: string; value: string }>(
+    `SELECT ts::text AS t, value::text AS value
+       FROM performance_intraday
+      WHERE symbol = 'PORTFOLIO'
+        AND (ts AT TIME ZONE 'America/New_York')::date
+          = (now() AT TIME ZONE 'America/New_York')::date
+      ORDER BY ts ASC`,
+  );
+  return rows.map((r) => ({ t: r.t, value: Number(r.value) }));
+}
+
 // Daily performance series from a specific start date onward. Used for the
 // "since first trade" comparison view.
 export async function getPerformanceSeriesSince(
