@@ -34,6 +34,19 @@ export type Benchmark = {
   current_price: number;
 };
 
+export type TradeStats = {
+  closedTrades: number;
+  winRate: number;
+  avgHoldDays: number;
+};
+
+export type MarketClock = {
+  isOpen: boolean;
+  nextOpen: string | null;
+  nextClose: string | null;
+  capturedAt: string;
+};
+
 export type PerformancePoint = { t: string; value: number };
 
 export type PerformanceSeries = {

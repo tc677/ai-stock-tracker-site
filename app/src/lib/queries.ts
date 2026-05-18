@@ -3,8 +3,11 @@ import type {
   AccountSummary,
   Activity,
   Benchmark,
+  MarketClock,
+  PerformancePoint,
   PerformanceSeries,
   Position,
+  TradeStats,
 } from "./types";
 
 export async function getSummary(): Promise<AccountSummary | null> {
@@ -136,6 +139,112 @@ export async function getInceptionDate(): Promise<string | null> {
      FROM activity`,
   );
   return rows[0]?.date ?? null;
+}
+
+// FIFO lot matcher over the activity table. Each sell consumes from the
+// front of that symbol's open-buy queue; a fully-matched buy->sell pair
+// counts as one closed trade. Open lots (positions still held) are not
+// counted in win rate - only realized P/L is honest.
+export async function getTradeStats(): Promise<TradeStats | null> {
+  const { rows } = await db.query<{
+    symbol: string;
+    side: "buy" | "sell";
+    qty: string;
+    price: string;
+    filled_at: string;
+  }>(
+    `SELECT symbol, side, qty, price, filled_at
+       FROM activity
+       ORDER BY filled_at ASC, id ASC`,
+  );
+
+  type Lot = { qty: number; price: number; ts: number };
+  const open = new Map<string, Lot[]>();
+  let closed = 0;
+  let wins = 0;
+  let holdMsTotal = 0;
+
+  for (const r of rows) {
+    const qty = Number(r.qty);
+    const price = Number(r.price);
+    const ts = new Date(r.filled_at).getTime();
+    let lots = open.get(r.symbol);
+    if (!lots) {
+      lots = [];
+      open.set(r.symbol, lots);
+    }
+    if (r.side === "buy") {
+      lots.push({ qty, price, ts });
+      continue;
+    }
+    // sell: consume buy lots FIFO. Each consumed slice (partial or whole
+    // buy lot) realizes one "closed trade" for our accounting.
+    let remaining = qty;
+    while (remaining > 1e-9 && lots.length > 0) {
+      const lot = lots[0];
+      const matched = Math.min(lot.qty, remaining);
+      const pl = (price - lot.price) * matched;
+      closed++;
+      if (pl > 0) wins++;
+      holdMsTotal += ts - lot.ts;
+      lot.qty -= matched;
+      remaining -= matched;
+      if (lot.qty <= 1e-9) lots.shift();
+    }
+    // Any short-sale style overflow (selling more than we ever bought)
+    // is ignored - the puller doesn't currently track short positions.
+  }
+
+  if (closed === 0) return null;
+  return {
+    closedTrades: closed,
+    winRate: wins / closed,
+    avgHoldDays: holdMsTotal / closed / 86_400_000,
+  };
+}
+
+// Max peak-to-trough drawdown over a series, returned as a negative pct
+// (e.g. -3.2 means worst observed -3.2% from a running peak). Returns 0
+// when the series is empty or never declined.
+export function computeMaxDrawdown(points: PerformancePoint[]): number {
+  let peak = -Infinity;
+  let worst = 0;
+  for (const p of points) {
+    const v = Number(p.value);
+    if (!isFinite(v) || v <= 0) continue;
+    if (v > peak) peak = v;
+    if (peak > 0) {
+      const dd = (v - peak) / peak;
+      if (dd < worst) worst = dd;
+    }
+  }
+  return worst * 100;
+}
+
+// Reads the cached market clock blob the puller writes on every run.
+// Returns null when the puller hasn't written one yet.
+export async function getMarketClock(): Promise<MarketClock | null> {
+  const { rows } = await db.query<{ value: string }>(
+    `SELECT value FROM puller_meta WHERE key = 'market_clock'`,
+  );
+  const raw = rows[0]?.value;
+  if (!raw) return null;
+  try {
+    const j = JSON.parse(raw) as {
+      is_open: boolean;
+      next_open: string | null;
+      next_close: string | null;
+      captured_at: string;
+    };
+    return {
+      isOpen: !!j.is_open,
+      nextOpen: j.next_open ?? null,
+      nextClose: j.next_close ?? null,
+      capturedAt: j.captured_at,
+    };
+  } catch {
+    return null;
+  }
 }
 
 // Intraday PORTFOLIO points for the current ET trading day. Drives the

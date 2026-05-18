@@ -8,7 +8,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Activity, PerformanceSeries, Position } from "@/lib/types";
+import type {
+  Activity,
+  MarketClock,
+  PerformanceSeries,
+  Position,
+  TradeStats,
+} from "@/lib/types";
 
 export type LiveSnapshot = {
   summary: {
@@ -22,6 +28,9 @@ export type LiveSnapshot = {
   priorClose: number | null;
   inceptionDate: string | null;
   todaySeries: { t: string; value: number }[];
+  tradeStats: TradeStats | null;
+  maxDrawdownPct: number | null;
+  marketClock: MarketClock | null;
 };
 
 type Ctx = {

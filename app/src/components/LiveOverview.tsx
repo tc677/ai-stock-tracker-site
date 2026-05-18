@@ -43,6 +43,8 @@ export function LiveOverview() {
         sincePct={sincePct}
         todayDollar={todayDollar}
         todayPct={todayPct}
+        maxDrawdownPct={data.maxDrawdownPct}
+        marketClock={data.marketClock}
       />
       {target &&
         createPortal(

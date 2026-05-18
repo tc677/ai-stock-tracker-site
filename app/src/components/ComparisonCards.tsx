@@ -21,16 +21,23 @@ export function ComparisonCards({
     return null;
   }
 
+  const portfolioPct = pctChange(portfolio);
   const rows = series
-    .map((s) => ({
-      label: s.label,
-      symbol: s.symbol,
-      pct: pctChange(s),
-      points: s.points,
-      isPortfolio: s.symbol === "PORTFOLIO",
-    }))
+    .map((s) => {
+      const absolute = pctChange(s);
+      return {
+        label: s.label,
+        symbol: s.symbol,
+        // absolute return is still used for sorting + true ranking
+        pct: absolute,
+        // gap vs portfolio is what the bar + label visualize
+        gap: absolute - portfolioPct,
+        points: s.points,
+        isPortfolio: s.symbol === "PORTFOLIO",
+      };
+    })
     .sort((a, b) => b.pct - a.pct);
-  const maxAbs = Math.max(0.01, ...rows.map((r) => Math.abs(r.pct)));
+  const maxAbs = Math.max(0.01, ...rows.map((r) => Math.abs(r.gap)));
 
   // Wrap in an x-scroll container with a minimum content width so the
   // grid columns (rank/label/bar/sparkline/pct) keep their natural
@@ -39,7 +46,7 @@ export function ComparisonCards({
   return (
     <div className="overflow-x-auto">
       <LayoutGroup>
-        <div className="flex flex-col min-w-[34rem]">
+        <div className="flex flex-col min-w-[36rem]">
           {rows.map((r, i) => (
             <Row
               key={r.symbol}
@@ -47,6 +54,7 @@ export function ComparisonCards({
               label={r.label}
               symbol={r.symbol}
               pct={r.pct}
+              gap={r.gap}
               points={r.points}
               maxAbs={maxAbs}
               isPortfolio={r.isPortfolio}
@@ -70,6 +78,7 @@ function Row({
   label,
   symbol,
   pct,
+  gap,
   points,
   maxAbs,
   isPortfolio,
@@ -79,6 +88,9 @@ function Row({
   label: string;
   symbol: string;
   pct: number;
+  // Gap vs portfolio (in pct points). Portfolio's own row has gap=0.
+  // Bars + labels visualize gap; pct is kept only for the sparkline color.
+  gap: number;
   points: PerformancePoint[];
   maxAbs: number;
   isPortfolio: boolean;
@@ -86,30 +98,34 @@ function Row({
 }) {
   const { phase } = useIntro();
   const revealed = phase === "plop" || phase === "done";
-  const positive = pct >= 0;
+  // Visual sign is the gap (am I ahead/behind?). Portfolio row is neutral.
+  const positive = isPortfolio ? null : gap >= 0;
   const valueColor = revealed
-    ? positive
-      ? "text-emerald-600 dark:text-emerald-400"
-      : "text-rose-600 dark:text-rose-400"
+    ? positive == null
+      ? "text-zinc-600 dark:text-zinc-300"
+      : positive
+        ? "text-emerald-600 dark:text-emerald-400"
+        : "text-rose-600 dark:text-rose-400"
     : "text-zinc-400 dark:text-zinc-500";
-  const widthPct = revealed ? (Math.abs(pct) / maxAbs) * 100 : 0;
+  const widthPct = revealed ? (Math.abs(gap) / maxAbs) * 100 : 0;
 
-  // The portfolio bar gets full opacity + a touch of row bg so it
-  // reads as the protagonist among the benchmark comparison set.
-  const barColor = positive
-    ? isPortfolio
-      ? "bg-emerald-500 dark:bg-emerald-400"
-      : "bg-emerald-500/60 dark:bg-emerald-400/60"
-    : isPortfolio
-      ? "bg-rose-500 dark:bg-rose-400"
-      : "bg-rose-500/60 dark:bg-rose-400/60";
-  const sparkColor = positive ? "#10b981" : "#ef4444";
+  // Benchmark bar color reflects gap sign. Portfolio row has no bar
+  // (gap is zero with itself) but we still set a fallback color.
+  const barColor =
+    positive == null
+      ? "bg-zinc-400 dark:bg-zinc-600"
+      : positive
+        ? "bg-emerald-500/70 dark:bg-emerald-400/70"
+        : "bg-rose-500/70 dark:bg-rose-400/70";
+  // Sparkline color follows the benchmark's own absolute return so a
+  // losing benchmark line still reads red regardless of the gap.
+  const sparkColor = pct >= 0 ? "#10b981" : "#ef4444";
 
   return (
     <motion.div
       layout
       transition={{ type: "spring", stiffness: 320, damping: 32 }}
-      className={`grid grid-cols-[2rem_8rem_1fr_6rem_5rem] items-center gap-3 px-3 py-3 ${
+      className={`grid grid-cols-[2rem_8rem_1fr_6rem_7.5rem] items-center gap-3 px-3 py-3 ${
         isPortfolio ? "bg-zinc-50 dark:bg-zinc-900/40 rounded-md" : ""
       } ${
         isLast ? "" : "border-b border-zinc-100 dark:border-zinc-900"
@@ -137,19 +153,31 @@ function Row({
       </div>
       <div className="relative h-3">
         <span className="absolute left-1/2 top-0 bottom-0 w-px bg-zinc-300 dark:bg-zinc-700" />
-        <span
-          className={`absolute top-0 bottom-0 rounded-sm transition-[width] duration-1000 ease-out ${barColor} ${
-            positive ? "left-1/2" : "right-1/2"
-          }`}
-          style={{ width: `${widthPct / 2}%` }}
-        />
+        {positive != null && (
+          <span
+            className={`absolute top-0 bottom-0 rounded-sm transition-[width] duration-1000 ease-out ${barColor} ${
+              positive ? "left-1/2" : "right-1/2"
+            }`}
+            style={{ width: `${widthPct / 2}%` }}
+          />
+        )}
       </div>
       <Sparkline points={points} color={sparkColor} revealed={revealed} />
-      <AnimatedNumber
-        value={pct}
-        format={(n) => `${n >= 0 ? "+" : ""}${fmtPct(n)}`}
-        className={`text-right font-mono text-sm font-semibold tabular-nums transition-colors duration-1000 ${valueColor}`}
-      />
+      {isPortfolio ? (
+        <div
+          className={`text-right font-mono text-sm font-semibold tabular-nums ${valueColor}`}
+        >
+          baseline
+        </div>
+      ) : (
+        <AnimatedNumber
+          value={gap}
+          format={(n) =>
+            `${n >= 0 ? "+" : ""}${fmtPct(n)} vs port.`
+          }
+          className={`text-right font-mono text-sm font-semibold tabular-nums transition-colors duration-1000 ${valueColor}`}
+        />
+      )}
     </motion.div>
   );
 }

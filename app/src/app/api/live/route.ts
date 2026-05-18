@@ -1,11 +1,14 @@
 import {
+  computeMaxDrawdown,
   getActivity,
   getInceptionDate,
   getIntradayPortfolioToday,
+  getMarketClock,
   getPerformanceSeriesSince,
   getPositions,
   getPriorPortfolioClose,
   getSummary,
+  getTradeStats,
 } from "@/lib/queries";
 
 // Single live-data endpoint the client polls to refresh every dynamic
@@ -15,15 +18,25 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const [summary, inceptionDate, positions, activity, priorClose, todaySeries] =
-    await Promise.all([
-      getSummary().catch(() => null),
-      getInceptionDate().catch(() => null),
-      getPositions().catch(() => []),
-      getActivity(100).catch(() => []),
-      getPriorPortfolioClose().catch(() => null),
-      getIntradayPortfolioToday().catch(() => []),
-    ]);
+  const [
+    summary,
+    inceptionDate,
+    positions,
+    activity,
+    priorClose,
+    todaySeries,
+    tradeStats,
+    marketClock,
+  ] = await Promise.all([
+    getSummary().catch(() => null),
+    getInceptionDate().catch(() => null),
+    getPositions().catch(() => []),
+    getActivity(100).catch(() => []),
+    getPriorPortfolioClose().catch(() => null),
+    getIntradayPortfolioToday().catch(() => []),
+    getTradeStats().catch(() => null),
+    getMarketClock().catch(() => null),
+  ]);
 
   if (!summary) {
     return Response.json({ error: "no data" }, { status: 503 });
@@ -32,6 +45,10 @@ export async function GET() {
   const sinceSeries = inceptionDate
     ? await getPerformanceSeriesSince(inceptionDate).catch(() => [])
     : [];
+  const portfolioPoints =
+    sinceSeries.find((s) => s.symbol === "PORTFOLIO")?.points ?? [];
+  const maxDrawdownPct =
+    portfolioPoints.length > 0 ? computeMaxDrawdown(portfolioPoints) : null;
 
   return Response.json(
     {
@@ -46,6 +63,9 @@ export async function GET() {
       priorClose,
       inceptionDate,
       todaySeries,
+      tradeStats,
+      maxDrawdownPct,
+      marketClock,
     },
     { headers: { "cache-control": "no-store" } },
   );

@@ -10,29 +10,43 @@ import { LiveLeaderboard } from "@/components/LiveLeaderboard";
 import { LiveOverview } from "@/components/LiveOverview";
 import { LivePositionSpotlight } from "@/components/LivePositionSpotlight";
 import { LivePositionsTreemap } from "@/components/LivePositionsTreemap";
+import { LiveTradeStats } from "@/components/LiveTradeStats";
 import {
+  computeMaxDrawdown,
   getActivity,
   getInceptionDate,
   getIntradayPortfolioToday,
+  getMarketClock,
   getPerformanceSeriesSince,
   getPositions,
   getPriorPortfolioClose,
   getSummary,
+  getTradeStats,
 } from "@/lib/queries";
 import { fmtDate } from "@/lib/format";
 
 export const revalidate = 10;
 
 export default async function Home() {
-  const [summary, inceptionDate, positions, activity, priorClose, todaySeries] =
-    await Promise.all([
-      getSummary().catch(() => null),
-      getInceptionDate().catch(() => null),
-      getPositions().catch(() => []),
-      getActivity(100).catch(() => []),
-      getPriorPortfolioClose().catch(() => null),
-      getIntradayPortfolioToday().catch(() => []),
-    ]);
+  const [
+    summary,
+    inceptionDate,
+    positions,
+    activity,
+    priorClose,
+    todaySeries,
+    tradeStats,
+    marketClock,
+  ] = await Promise.all([
+    getSummary().catch(() => null),
+    getInceptionDate().catch(() => null),
+    getPositions().catch(() => []),
+    getActivity(100).catch(() => []),
+    getPriorPortfolioClose().catch(() => null),
+    getIntradayPortfolioToday().catch(() => []),
+    getTradeStats().catch(() => null),
+    getMarketClock().catch(() => null),
+  ]);
 
   if (!summary) {
     return (
@@ -61,6 +75,14 @@ export default async function Home() {
     priorClose,
     inceptionDate,
     todaySeries,
+    tradeStats,
+    maxDrawdownPct:
+      sinceSeries.find((s) => s.symbol === "PORTFOLIO")?.points.length
+        ? computeMaxDrawdown(
+            sinceSeries.find((s) => s.symbol === "PORTFOLIO")!.points,
+          )
+        : null,
+    marketClock,
   };
 
   const heroBlock = (
@@ -73,6 +95,7 @@ export default async function Home() {
       </div>
       <LiveOverview />
       <LivePositionSpotlight />
+      <LiveTradeStats />
       <LiveAIStatusLine />
     </section>
   );

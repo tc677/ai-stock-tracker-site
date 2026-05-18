@@ -15,10 +15,22 @@ export const handler = async () => {
     // history data is useful regardless of whether the market is open now.
     await maybeBackfill();
 
-    // Skip the live-pull part when the market is closed (weekends,
-    // holidays, off-hours). FORCE_PULL=1 bypasses for manual runs.
+    // Refresh the cached market clock state regardless of whether we go
+    // on to pull data. The dashboard reads this blob to decide whether
+    // to show the live "Today" strip or a "Market closed - opens in
+    // Xh Ym" countdown. FORCE_PULL=1 skips the clock check entirely
+    // (manual backfill / debug runs).
     if (!process.env.FORCE_PULL) {
       const clock = await alpaca.clock();
+      await setMeta(
+        "market_clock",
+        JSON.stringify({
+          is_open: clock.is_open,
+          next_open: clock.next_open,
+          next_close: clock.next_close,
+          captured_at: new Date().toISOString(),
+        }),
+      );
       if (!clock.is_open) {
         console.log(
           `market closed, skipping live pull. next open: ${clock.next_open}`,
