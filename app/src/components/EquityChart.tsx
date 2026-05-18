@@ -154,7 +154,10 @@ export function EquityChart({ series }: { series: PerformanceSeries[] }) {
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-4 text-xs">
+      {/* Single-line, horizontally scrollable so the section's height
+          stays stable as benchmarks are toggled on/off. Items
+          flex-shrink-0 so labels don't compress. */}
+      <div className="mt-3 flex flex-nowrap items-center gap-4 text-xs overflow-x-auto pb-1">
         {portfolio && <LegendDot color={PORTFOLIO_COLOR} label="Portfolio" />}
         {benchmarks.map((s, i) => (
           <LegendDot
@@ -179,7 +182,7 @@ function LegendDot({
   dashed?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 flex-shrink-0 whitespace-nowrap">
       <span
         className="inline-block w-6 h-0.5"
         style={{
