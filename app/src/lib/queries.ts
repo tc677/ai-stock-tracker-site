@@ -105,6 +105,22 @@ export async function getActivity(limit = 50): Promise<Activity[]> {
 
 import { isIntraday, rangeSinceClause, type Range } from "./ranges";
 
+// Most recent PORTFOLIO row in performance_daily strictly before today
+// in Eastern Time. Used as the baseline for "Today" P/L on the hero.
+// Returns null if no prior trading day exists.
+export async function getPriorPortfolioClose(): Promise<number | null> {
+  const { rows } = await db.query<{ value: string | null }>(
+    `SELECT value::text AS value
+       FROM performance_daily
+      WHERE symbol = 'PORTFOLIO'
+        AND date < ((now() AT TIME ZONE 'America/New_York')::date)
+      ORDER BY date DESC
+      LIMIT 1`,
+  );
+  const v = rows[0]?.value;
+  return v != null ? Number(v) : null;
+}
+
 // Returns the day BEFORE the earliest trade, in Eastern Time. That gives the
 // chart and comparison cards an "all cash" baseline to grow from, so the
 // percentage change reflects the actual trading result rather than starting

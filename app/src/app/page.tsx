@@ -1,6 +1,8 @@
+import { AIStatusLine } from "@/components/AIStatusLine";
 import { ComparisonCards } from "@/components/ComparisonCards";
 import { FilteredChart } from "@/components/FilteredChart";
 import { HeroNumbers } from "@/components/HeroNumbers";
+import { PositionSpotlight } from "@/components/PositionSpotlight";
 import { PositionsTreemap } from "@/components/PositionsTreemap";
 import { FooterTimestamp } from "@/components/FooterTimestamp";
 import {
@@ -8,6 +10,7 @@ import {
   getInceptionDate,
   getPerformanceSeriesSince,
   getPositions,
+  getPriorPortfolioClose,
   getSummary,
 } from "@/lib/queries";
 import { fmtDate, fmtDateTime, fmtUSD } from "@/lib/format";
@@ -15,12 +18,14 @@ import { fmtDate, fmtDateTime, fmtUSD } from "@/lib/format";
 export const revalidate = 10;
 
 export default async function Home() {
-  const [summary, inceptionDate, positions, activity] = await Promise.all([
-    getSummary().catch(() => null),
-    getInceptionDate().catch(() => null),
-    getPositions().catch(() => []),
-    getActivity(100).catch(() => []),
-  ]);
+  const [summary, inceptionDate, positions, activity, priorClose] =
+    await Promise.all([
+      getSummary().catch(() => null),
+      getInceptionDate().catch(() => null),
+      getPositions().catch(() => []),
+      getActivity(100).catch(() => []),
+      getPriorPortfolioClose().catch(() => null),
+    ]);
 
   const sinceSeries = inceptionDate
     ? await getPerformanceSeriesSince(inceptionDate).catch(() => [])
@@ -46,6 +51,14 @@ export default async function Home() {
     return ((current - baseline) / baseline) * 100;
   })();
 
+  // Today's P/L is current equity vs the most recent PORTFOLIO close
+  // strictly before today (ET). On the very first trading day there's
+  // no prior close yet, so both values are null and the strip is hidden.
+  const todayDollar =
+    priorClose != null ? Number(summary.portfolio_value) - priorClose : null;
+  const todayPct =
+    priorClose != null && priorClose !== 0 ? (todayDollar! / priorClose) * 100 : null;
+
   const heroBlock = (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold tracking-tight">Overview</h2>
@@ -56,15 +69,19 @@ export default async function Home() {
         portfolioValue={Number(summary.portfolio_value)}
         cash={Number(summary.cash)}
         sincePct={sincePct}
+        todayDollar={todayDollar}
+        todayPct={todayPct}
       />
-      {inceptionDate && (
-        <div className="mt-6 space-y-3">
-          <h2 className="text-sm font-medium text-zinc-500">
-            Since {fmtDate(inceptionDate)}
-          </h2>
-          <ComparisonCards series={sinceSeries} />
-        </div>
-      )}
+      <PositionSpotlight positions={positions} />
+      <AIStatusLine positions={positions} activity={activity} />
+    </section>
+  );
+
+  const leaderboardBlock = inceptionDate && sinceSeries.length > 0 && (
+    <section className="space-y-3 lg:col-span-2">
+      <h2 className="text-xl font-semibold tracking-tight">Leaderboard</h2>
+      <p className="text-sm text-zinc-500">Since {fmtDate(inceptionDate)}</p>
+      <ComparisonCards series={sinceSeries} />
     </section>
   );
 
@@ -172,6 +189,7 @@ export default async function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12 sm:gap-y-16 lg:gap-x-24 lg:gap-y-24">
         {heroBlock}
         {performanceBlock}
+        {leaderboardBlock}
         {positionsBlock}
         {activityBlock}
       </div>
