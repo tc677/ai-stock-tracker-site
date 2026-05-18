@@ -68,11 +68,11 @@ export function PositionsTreemap({
 // movers go dark and near-zero positions stay muted.
 const CAP_PCT = 10;
 const STOPS: { t: number; rgb: [number, number, number] }[] = [
-  { t: -1.0, rgb: [185, 28, 28] },    // deep vivid red at -CAP
-  { t: -0.5, rgb: [248, 113, 113] },  // bright coral mid-loss
+  { t: -1.0, rgb: [176, 36, 36] },    // deep red at -CAP
+  { t: -0.5, rgb: [248, 81, 73] },    // GitHub danger (rose-500) mid-loss
   { t: 0.0, rgb: [82, 82, 91] },      // neutral slate
-  { t: 0.5, rgb: [74, 222, 128] },    // bright emerald mid-gain
-  { t: 1.0, rgb: [21, 128, 61] },     // deep emerald at +CAP
+  { t: 0.5, rgb: [63, 185, 80] },     // GitHub success (emerald-500) mid-gain
+  { t: 1.0, rgb: [31, 122, 54] },     // deep green at +CAP
 ];
 
 function lerp(a: number, b: number, t: number): number {
@@ -135,7 +135,7 @@ function Tile(props: TileProps) {
   const pctSize = Math.min(24, Math.max(14, symbolSize * 0.6));
 
   return (
-    <g>
+    <g className="treemap-tile">
       <rect
         x={x}
         y={y}

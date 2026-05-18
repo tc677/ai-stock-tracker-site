@@ -119,14 +119,16 @@ function Row({
         : "bg-rose-500/70 dark:bg-rose-400/70";
   // Sparkline color follows the benchmark's own absolute return so a
   // losing benchmark line still reads red regardless of the gap.
-  const sparkColor = pct >= 0 ? "#10b981" : "#ef4444";
+  const sparkColor = pct >= 0 ? "#3fb950" : "#f85149";
 
   return (
     <motion.div
       layout
       transition={{ type: "spring", stiffness: 320, damping: 32 }}
-      className={`grid grid-cols-[2rem_8rem_1fr_6rem_7.5rem] items-center gap-3 px-3 py-3 ${
-        isPortfolio ? "bg-zinc-50 dark:bg-zinc-900/40 rounded-md" : ""
+      className={`grid grid-cols-[2rem_8rem_1fr_6rem_7.5rem] items-center gap-3 px-3 py-3 transition-colors ${
+        isPortfolio
+          ? "bg-zinc-50 dark:bg-zinc-900/40 rounded-md hover:bg-zinc-100/80 dark:hover:bg-zinc-900/60"
+          : "hover:bg-zinc-50/70 dark:hover:bg-zinc-900/30"
       } ${
         isLast ? "" : "border-b border-zinc-100 dark:border-zinc-900"
       }`}
@@ -138,7 +140,10 @@ function Row({
         {isPortfolio ? (
           <>
             <div className="font-mono text-sm font-semibold">Portfolio</div>
-            <div className="text-[10px] uppercase tracking-wide text-zinc-500 leading-tight">
+            <div
+              className="text-[10px] uppercase tracking-wide leading-tight font-semibold"
+              style={{ color: "var(--ai-accent)" }}
+            >
               AI managed
             </div>
           </>

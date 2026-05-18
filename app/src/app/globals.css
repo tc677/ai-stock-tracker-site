@@ -10,6 +10,27 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-plex-mono);
+
+  /* Terminal-style desaturated green/red. Replaces Tailwind's framework-
+     default emerald/rose so the page reads less "startup landing page"
+     and more "Bloomberg terminal." Drawn from GitHub's status palette. */
+  --color-emerald-300: #7ee787;
+  --color-emerald-400: #56d364;
+  --color-emerald-500: #3fb950;
+  --color-emerald-600: #2ea043;
+  --color-emerald-700: #1f7a36;
+  --color-rose-300: #ffa198;
+  --color-rose-400: #ff7b72;
+  --color-rose-500: #f85149;
+  --color-rose-600: #da3633;
+  --color-rose-700: #b62324;
+}
+
+/* One cold accent reserved for AI-specific UI (the terminal cursor on
+   the status line, the "AI managed" subtitle). Used nowhere else so
+   the semantic association stays clean. */
+:root {
+  --ai-accent: #7dd3fc; /* sky-300, desaturated cyan */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -59,6 +80,16 @@ body[data-intro="zoom"] footer {
   .terminal-cursor {
     animation: none;
   }
+}
+
+/* Treemap tile hover: subtle brightness lift on the underlying rect so
+   the tile feels responsive without changing layout or text color. */
+.treemap-tile {
+  cursor: pointer;
+  transition: filter 150ms ease-out;
+}
+.treemap-tile:hover {
+  filter: brightness(1.12);
 }
 
 @keyframes introPlop {

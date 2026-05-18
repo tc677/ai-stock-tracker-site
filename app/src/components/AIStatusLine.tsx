@@ -23,7 +23,10 @@ export function AIStatusLine({
 
   return (
     <div className="mt-3 font-mono text-[11px] tracking-tight text-zinc-500">
-      <span className="terminal-cursor text-emerald-600 dark:text-emerald-400">
+      <span
+        className="terminal-cursor"
+        style={{ color: "var(--ai-accent)" }}
+      >
         ▍
       </span>{" "}
       <span>{holdingPart}</span>

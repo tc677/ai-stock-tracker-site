@@ -60,7 +60,7 @@ export function IntradayChart({
 
   const last = data[data.length - 1].pct;
   const isUp = last >= 0;
-  const stroke = isUp ? "#10b981" : "#f43f5e"; // emerald-500 / rose-500
+  const stroke = isUp ? "#3fb950" : "#f85149"; // GitHub-style green/red
 
   return (
     <div className="h-80 sm:h-[28rem]">

@@ -13,7 +13,7 @@ import type { PerformanceSeries } from "@/lib/types";
 import { fmtDate, fmtPct } from "@/lib/format";
 import { useIntro } from "./Intro";
 
-const PORTFOLIO_COLOR = "#10b981"; // emerald-500
+const PORTFOLIO_COLOR = "#3fb950"; // GitHub-style emerald (matches Tailwind override)
 // Specific colors per known benchmark; fallback palette for anything else.
 const BENCHMARK_COLOR_MAP: Record<string, string> = {
   SPY: "#ef4444",  // red - S&P 500
