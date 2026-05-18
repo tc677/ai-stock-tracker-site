@@ -22,18 +22,21 @@ export function Nav() {
           className="font-mono font-semibold tracking-tight text-lg flex items-baseline gap-2"
         >
           <span style={{ whiteSpace: "pre" }}>{display}</span>
-          {showEmoji && (
-            <span
-              className="inline-block"
-              style={{
-                animation: plopping
-                  ? "introPlop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both"
-                  : undefined,
-              }}
-            >
-              🤔
-            </span>
-          )}
+          {/* The emoji is always rendered so its width is part of the
+              flex layout from the start. During decrypt/zoom it's
+              hidden with visibility (still occupying space), so when
+              it pops in at "plop" the title doesn't shift left. */}
+          <span
+            className="inline-block"
+            style={{
+              visibility: showEmoji ? "visible" : "hidden",
+              animation: plopping
+                ? "introPlop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both"
+                : undefined,
+            }}
+          >
+            🤔
+          </span>
         </Link>
       </nav>
     </header>
