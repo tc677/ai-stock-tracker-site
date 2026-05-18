@@ -9,7 +9,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,7 +22,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
 
 /* Hide the rest of the page while the intro is at giant scale, then
@@ -36,32 +36,6 @@ body[data-intro="zoom"] main,
 body[data-intro="zoom"] footer {
   opacity: 1;
   transition: opacity 1300ms ease-out;
-}
-
-/* Background trend line — draw-in.
-   The path is fully drawn at all times; a clipPath rect scales from
-   left to right to reveal it. Using a clip-path instead of stroke
-   dasharray avoids a sub-pixel gap at the right edge that the
-   non-scaling-stroke + pathLength combination produced, and replays
-   cleanly whenever the rect mounts (e.g. after the intro hands off). */
-.bg-trend-reveal {
-  transform: scaleX(0);
-  transform-origin: 0 50%;
-  transform-box: fill-box;
-  animation: bgTrendReveal 1500ms ease-out forwards;
-}
-
-@keyframes bgTrendReveal {
-  to {
-    transform: scaleX(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .bg-trend-reveal {
-    animation: none;
-    transform: scaleX(1);
-  }
 }
 
 @keyframes introPlop {

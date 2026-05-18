@@ -19,7 +19,7 @@ export function Nav() {
       <nav className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-center">
         <Link
           href="/"
-          className="font-semibold tracking-tight text-lg flex items-baseline gap-2"
+          className="font-mono font-semibold tracking-tight text-lg flex items-baseline gap-2"
         >
           <span style={{ whiteSpace: "pre" }}>{display}</span>
           {showEmoji && (

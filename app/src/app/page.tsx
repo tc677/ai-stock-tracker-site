@@ -2,7 +2,6 @@ import { ComparisonCards } from "@/components/ComparisonCards";
 import { FilteredChart } from "@/components/FilteredChart";
 import { HeroNumbers } from "@/components/HeroNumbers";
 import { PositionsTreemap } from "@/components/PositionsTreemap";
-import { BackgroundTrendLine } from "@/components/BackgroundTrendLine";
 import { FooterTimestamp } from "@/components/FooterTimestamp";
 import {
   getActivity,
@@ -169,7 +168,6 @@ export default async function Home() {
 
   return (
     <div className="space-y-12">
-      <BackgroundTrendLine isUp={(sincePct ?? 0) >= 0} />
       <FooterTimestamp>Updated {fmtDateTime(summary.updated_at)}.</FooterTimestamp>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12 sm:gap-y-16 lg:gap-x-24 lg:gap-y-24">
         {heroBlock}
