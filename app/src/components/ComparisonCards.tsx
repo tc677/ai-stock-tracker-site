@@ -1,5 +1,6 @@
 "use client";
 
+import { LayoutGroup, motion } from "framer-motion";
 import { fmtPct } from "@/lib/format";
 import type { PerformancePoint, PerformanceSeries } from "@/lib/types";
 import { AnimatedNumber } from "./AnimatedNumber";
@@ -37,21 +38,23 @@ export function ComparisonCards({
   // instead of seeing the bars collapse to zero.
   return (
     <div className="overflow-x-auto">
-      <div className="flex flex-col min-w-[34rem]">
-        {rows.map((r, i) => (
-          <Row
-            key={r.symbol}
-            rank={i + 1}
-            label={r.label}
-            symbol={r.symbol}
-            pct={r.pct}
-            points={r.points}
-            maxAbs={maxAbs}
-            isPortfolio={r.isPortfolio}
-            isLast={i === rows.length - 1}
-          />
-        ))}
-      </div>
+      <LayoutGroup>
+        <div className="flex flex-col min-w-[34rem]">
+          {rows.map((r, i) => (
+            <Row
+              key={r.symbol}
+              rank={i + 1}
+              label={r.label}
+              symbol={r.symbol}
+              pct={r.pct}
+              points={r.points}
+              maxAbs={maxAbs}
+              isPortfolio={r.isPortfolio}
+              isLast={i === rows.length - 1}
+            />
+          ))}
+        </div>
+      </LayoutGroup>
     </div>
   );
 }
@@ -103,7 +106,9 @@ function Row({
   const sparkColor = positive ? "#10b981" : "#ef4444";
 
   return (
-    <div
+    <motion.div
+      layout
+      transition={{ type: "spring", stiffness: 320, damping: 32 }}
       className={`grid grid-cols-[2rem_8rem_1fr_6rem_5rem] items-center gap-3 px-3 py-3 ${
         isPortfolio ? "bg-zinc-50 dark:bg-zinc-900/40 rounded-md" : ""
       } ${
@@ -145,7 +150,7 @@ function Row({
         format={(n) => `${n >= 0 ? "+" : ""}${fmtPct(n)}`}
         className={`text-right font-mono text-sm font-semibold tabular-nums transition-colors duration-1000 ${valueColor}`}
       />
-    </div>
+    </motion.div>
   );
 }
 

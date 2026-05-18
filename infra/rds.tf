@@ -29,7 +29,7 @@ resource "aws_security_group_rule" "db_from_tasks" {
 resource "aws_db_instance" "main" {
   identifier                 = "${var.project}-db"
   engine                     = "postgres"
-  engine_version             = "16.4"
+  engine_version             = "16.14"
   instance_class             = var.db_instance_class
   allocated_storage          = 20
   storage_type               = "gp3"
