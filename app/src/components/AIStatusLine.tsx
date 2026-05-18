@@ -23,7 +23,9 @@ export function AIStatusLine({
 
   return (
     <div className="mt-3 font-mono text-[11px] tracking-tight text-zinc-500">
-      <span className="text-emerald-600 dark:text-emerald-400">▍</span>{" "}
+      <span className="terminal-cursor text-emerald-600 dark:text-emerald-400">
+        ▍
+      </span>{" "}
       <span>{holdingPart}</span>
       <span className="px-1.5 text-zinc-400 dark:text-zinc-600">·</span>
       <span>{tradePart}</span>

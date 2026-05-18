@@ -61,7 +61,9 @@ export default async function Home() {
 
   const heroBlock = (
     <section className="space-y-3">
-      <h2 className="text-xl font-semibold tracking-tight">Overview</h2>
+      <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
+        <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> overview
+      </h2>
       <div className="text-sm font-medium text-zinc-500 mb-1">
         Portfolio value
       </div>
@@ -79,7 +81,9 @@ export default async function Home() {
 
   const leaderboardBlock = inceptionDate && sinceSeries.length > 0 && (
     <section className="space-y-3 lg:col-span-2">
-      <h2 className="text-xl font-semibold tracking-tight">Leaderboard</h2>
+      <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
+        <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> leaderboard
+      </h2>
       <p className="text-sm text-zinc-500">Since {fmtDate(inceptionDate)}</p>
       <ComparisonCards series={sinceSeries} />
     </section>
@@ -87,7 +91,9 @@ export default async function Home() {
 
   const performanceBlock = inceptionDate && sinceSeries.length > 0 && (
     <section className="space-y-3">
-      <h2 className="text-xl font-semibold tracking-tight">Performance</h2>
+      <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
+        <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> performance
+      </h2>
       <p className="text-sm text-zinc-500">Since {fmtDate(inceptionDate)}</p>
       <FilteredChart series={sinceSeries} />
     </section>
@@ -95,7 +101,9 @@ export default async function Home() {
 
   const positionsBlock = (
     <section className="space-y-3">
-      <h2 className="text-xl font-semibold tracking-tight">Positions</h2>
+      <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
+        <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> positions
+      </h2>
       {positions.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center text-zinc-500">
           No open positions.
@@ -124,7 +132,9 @@ export default async function Home() {
 
   const activityBlock = (
     <section className="space-y-3">
-      <h2 className="text-xl font-semibold tracking-tight">Activity</h2>
+      <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
+        <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> activity
+      </h2>
       {activity.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center text-zinc-500">
           No trades yet.

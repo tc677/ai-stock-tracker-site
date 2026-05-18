@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, JetBrains_Mono } from "next/font/google";
+import { Geist, IBM_Plex_Mono } from "next/font/google";
 import { Nav } from "@/components/Nav";
 import { IntroProvider } from "@/components/Intro";
 import "./globals.css";
 
 const sans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const mono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const mono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
 });
 
