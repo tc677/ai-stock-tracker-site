@@ -154,16 +154,16 @@ export function EquityChart({ series }: { series: PerformanceSeries[] }) {
         </ResponsiveContainer>
       </div>
 
-      {/* Single-line, horizontally scrollable so the section's height
-          stays stable as benchmarks are toggled on/off. Items
-          flex-shrink-0 so labels don't compress. */}
-      <div className="mt-3 flex flex-nowrap items-center gap-4 text-xs overflow-x-auto pb-1">
+      {/* Compact ticker-only legend keeps a single line on any
+          viewport without needing a scrollbar. Full benchmark names
+          are still visible in the "Compare to:" filter pills above. */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
         {portfolio && <LegendDot color={PORTFOLIO_COLOR} label="Portfolio" />}
         {benchmarks.map((s, i) => (
           <LegendDot
             key={s.symbol}
             color={colorFor(s.symbol, i)}
-            label={`${s.label} (${s.symbol})`}
+            label={s.symbol}
             dashed
           />
         ))}
@@ -182,7 +182,7 @@ function LegendDot({
   dashed?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 flex-shrink-0 whitespace-nowrap">
+    <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 whitespace-nowrap font-mono">
       <span
         className="inline-block w-6 h-0.5"
         style={{
