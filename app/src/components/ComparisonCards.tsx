@@ -31,21 +31,27 @@ export function ComparisonCards({
     .sort((a, b) => b.pct - a.pct);
   const maxAbs = Math.max(0.01, ...rows.map((r) => Math.abs(r.pct)));
 
+  // Wrap in an x-scroll container with a minimum content width so the
+  // grid columns (rank/label/bar/sparkline/pct) keep their natural
+  // sizing on narrow viewports and the user can scroll horizontally
+  // instead of seeing the bars collapse to zero.
   return (
-    <div className="flex flex-col">
-      {rows.map((r, i) => (
-        <Row
-          key={r.symbol}
-          rank={i + 1}
-          label={r.label}
-          symbol={r.symbol}
-          pct={r.pct}
-          points={r.points}
-          maxAbs={maxAbs}
-          isPortfolio={r.isPortfolio}
-          isLast={i === rows.length - 1}
-        />
-      ))}
+    <div className="overflow-x-auto">
+      <div className="flex flex-col min-w-[34rem]">
+        {rows.map((r, i) => (
+          <Row
+            key={r.symbol}
+            rank={i + 1}
+            label={r.label}
+            symbol={r.symbol}
+            pct={r.pct}
+            points={r.points}
+            maxAbs={maxAbs}
+            isPortfolio={r.isPortfolio}
+            isLast={i === rows.length - 1}
+          />
+        ))}
+      </div>
     </div>
   );
 }
