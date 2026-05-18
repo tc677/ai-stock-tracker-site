@@ -131,8 +131,8 @@ function Tile(props: TileProps) {
   const textColor = textColorFor(fill);
   const showLabel = width > 36 && height > 24;
   const showPct = !isCash && width > 60 && height > 44;
-  const symbolSize = Math.min(40, Math.max(16, Math.min(width, height) / 2.8));
-  const pctSize = Math.min(22, Math.max(13, symbolSize * 0.6));
+  const symbolSize = Math.min(44, Math.max(18, Math.min(width, height) / 2.5));
+  const pctSize = Math.min(24, Math.max(14, symbolSize * 0.6));
 
   return (
     <g>
@@ -150,9 +150,11 @@ function Tile(props: TileProps) {
           textAnchor="middle"
           dominantBaseline="middle"
           fill={textColor}
-          fontSize={symbolSize}
-          fontWeight={500}
-          fontFamily="var(--font-mono)"
+          fontWeight={600}
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: symbolSize,
+          }}
         >
           {name}
         </text>
@@ -164,9 +166,11 @@ function Tile(props: TileProps) {
           textAnchor="middle"
           dominantBaseline="middle"
           fill={textColor}
-          fontSize={pctSize}
-          fontWeight={400}
-          fontFamily="var(--font-mono)"
+          fontWeight={500}
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: pctSize,
+          }}
         >
           {pct >= 0 ? "+" : ""}
           {fmtPct(pct)}

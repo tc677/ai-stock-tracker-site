@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -29,6 +30,16 @@ export function IntradayChart({
 }) {
   const { phase } = useIntro();
   const revealed = phase === "plop" || phase === "done";
+
+  // Animate the area on its first reveal, then disable so 30s live-poll
+  // updates morph the line in place without restarting the 1.6s draw-in
+  // (which is what caused the "halfway then snap to end" effect).
+  const [animateOnce, setAnimateOnce] = useState(true);
+  useEffect(() => {
+    if (!revealed) return;
+    const t = setTimeout(() => setAnimateOnce(false), 1800);
+    return () => clearTimeout(t);
+  }, [revealed]);
 
   if (points.length < 2) {
     return (
@@ -127,7 +138,7 @@ export function IntradayChart({
               strokeWidth={2}
               fill="url(#intradayFill)"
               fillOpacity={1}
-              isAnimationActive
+              isAnimationActive={animateOnce}
               animationDuration={1600}
               animationEasing="ease-out"
               activeDot={{ r: 4, fill: stroke }}

@@ -18,12 +18,14 @@ export function LiveTradeStats() {
   const tradeWord = s.closedTrades === 1 ? "closed trade" : "closed trades";
 
   return (
-    <div className="text-sm font-mono tabular-nums text-zinc-500">
-      {s.closedTrades} {tradeWord}
-      <span className="mx-2 text-zinc-400 dark:text-zinc-600">·</span>
-      {winPct}% win
-      <span className="mx-2 text-zinc-400 dark:text-zinc-600">·</span>
-      avg hold {holdLabel}
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums text-zinc-500">
+      <span className="whitespace-nowrap">
+        {s.closedTrades} {tradeWord}
+      </span>
+      <span className="text-zinc-400 dark:text-zinc-600">·</span>
+      <span className="whitespace-nowrap">{winPct}% win</span>
+      <span className="text-zinc-400 dark:text-zinc-600">·</span>
+      <span className="whitespace-nowrap">avg hold {holdLabel}</span>
     </div>
   );
 }
