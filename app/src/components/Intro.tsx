@@ -65,7 +65,14 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const titleEl = document.querySelector('header a[href="/"]');
+    // Measure the text span itself, not the whole Link. The Link also
+    // contains an emoji slot that reserves layout space even when the
+    // emoji is hidden; if we measured the Link we'd center the giant
+    // title using the combined width, pulling the visible text off
+    // viewport center.
+    const titleEl = document.querySelector(
+      'header a[href="/"] > span:first-child',
+    );
     if (titleEl) {
       const rect = titleEl.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;

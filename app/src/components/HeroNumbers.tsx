@@ -42,13 +42,13 @@ export function HeroNumbers({
         <AnimatedNumber
           value={portfolioValue}
           format={fmtUSD}
-          className="text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums"
+          className="font-mono text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums"
         />
         {sincePct != null && (
           <AnimatedNumber
             value={sincePct}
             format={(n) => `${n >= 0 ? "+" : ""}${fmtPct(n)}`}
-            className="text-lg font-medium tabular-nums"
+            className="font-mono text-lg font-medium tabular-nums"
           />
         )}
       </div>
@@ -73,7 +73,7 @@ export function HeroNumbers({
         <AnimatedNumber
           value={cash}
           format={fmtUSD}
-          className="text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-50"
+          className="font-mono text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-50"
         />
       </div>
     </>

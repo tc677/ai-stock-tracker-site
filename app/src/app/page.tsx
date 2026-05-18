@@ -158,10 +158,10 @@ export default async function Home() {
                   key={a.id}
                   className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                 >
-                  <td className="px-4 py-2 text-zinc-500 tabular-nums">
+                  <td className="px-4 py-2 font-mono text-zinc-500 tabular-nums">
                     {fmtDateTime(a.filled_at)}
                   </td>
-                  <td className="px-4 py-2 font-semibold tracking-tight">
+                  <td className="px-4 py-2 font-mono font-semibold tracking-tight">
                     {a.symbol}
                   </td>
                   <td className="px-4 py-2">
@@ -175,13 +175,13 @@ export default async function Home() {
                       {a.side}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                  <td className="px-4 py-2 text-right font-mono tabular-nums text-zinc-600 dark:text-zinc-400">
                     {a.qty}
                   </td>
-                  <td className="px-4 py-2 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                  <td className="px-4 py-2 text-right font-mono tabular-nums text-zinc-600 dark:text-zinc-400">
                     {fmtUSD(a.price)}
                   </td>
-                  <td className="px-4 py-2 text-right tabular-nums font-medium">
+                  <td className="px-4 py-2 text-right font-mono tabular-nums font-medium">
                     {fmtUSD(a.qty * a.price)}
                   </td>
                 </tr>

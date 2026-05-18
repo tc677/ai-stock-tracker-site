@@ -151,7 +151,8 @@ function Tile(props: TileProps) {
           dominantBaseline="middle"
           fill={textColor}
           fontSize={symbolSize}
-          fontWeight={400}
+          fontWeight={500}
+          fontFamily="var(--font-mono)"
         >
           {name}
         </text>
@@ -165,6 +166,7 @@ function Tile(props: TileProps) {
           fill={textColor}
           fontSize={pctSize}
           fontWeight={400}
+          fontFamily="var(--font-mono)"
         >
           {pct >= 0 ? "+" : ""}
           {fmtPct(pct)}
@@ -187,12 +189,12 @@ function TileTooltip({
   const pctColor = positive ? "text-emerald-400" : "text-rose-400";
   return (
     <div className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 shadow-lg">
-      <div className="font-semibold">{d.name}</div>
-      <div className="mt-0.5 tabular-nums text-zinc-200">
+      <div className="font-mono font-semibold">{d.name}</div>
+      <div className="mt-0.5 font-mono tabular-nums text-zinc-200">
         {fmtUSD(Math.abs(d.marketValue))}
       </div>
       {!d.isCash && (
-        <div className={`tabular-nums ${pctColor}`}>
+        <div className={`font-mono tabular-nums ${pctColor}`}>
           {positive ? "+" : ""}
           {fmtPct(d.plPct)}
         </div>
