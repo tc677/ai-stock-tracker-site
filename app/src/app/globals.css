@@ -92,6 +92,32 @@ body[data-intro="zoom"] footer {
   filter: brightness(1.12);
 }
 
+/* Left-to-right reveal for the intraday "Today" chart. Runs once when
+   the wrapper switches from `intraday-hidden` to `intraday-reveal`
+   (i.e. when the intro hands off). Decoupled from Recharts so live
+   data updates can't abort it mid-flight. */
+.intraday-hidden {
+  clip-path: inset(0 100% 0 0);
+}
+.intraday-reveal {
+  animation: intradayReveal 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+@keyframes intradayReveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intraday-hidden,
+  .intraday-reveal {
+    animation: none;
+    clip-path: none;
+  }
+}
+
 @keyframes introPlop {
   0% {
     transform: translateY(-1.2em) scale(0.2);
