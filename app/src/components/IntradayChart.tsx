@@ -97,7 +97,7 @@ export function IntradayChart({
   }
 
   return (
-    <div className="h-80 sm:h-[28rem] relative">
+    <div className="h-96 sm:h-[34rem] relative">
       {data.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-zinc-500 text-sm z-10">
           Waiting for today&rsquo;s first intraday points.
@@ -204,7 +204,9 @@ export function IntradayChart({
                 strokeWidth={2}
                 fill="url(#intradayFill)"
                 fillOpacity={1}
-                isAnimationActive={false}
+                isAnimationActive
+                animationDuration={700}
+                animationEasing="ease-out"
                 activeDot={{ r: 4, fill: stroke }}
               />
             )}

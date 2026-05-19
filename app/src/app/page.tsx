@@ -86,7 +86,7 @@ export default async function Home() {
   };
 
   const heroBlock = (
-    <section className="space-y-3">
+    <section className="space-y-3 lg:col-span-2">
       <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
         <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> overview
       </h2>
@@ -101,7 +101,7 @@ export default async function Home() {
   );
 
   const leaderboardBlock = inceptionDate && sinceSeries.length > 0 && (
-    <section className="space-y-3 lg:col-span-2">
+    <section className="space-y-3 lg:col-span-5">
       <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
         <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> leaderboard
       </h2>
@@ -111,7 +111,7 @@ export default async function Home() {
   );
 
   const performanceBlock = inceptionDate && sinceSeries.length > 0 && (
-    <section className="space-y-3 lg:col-span-2">
+    <section className="space-y-3 lg:col-span-5">
       <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
         <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> performance
       </h2>
@@ -121,7 +121,7 @@ export default async function Home() {
   );
 
   const todayBlock = (
-    <section className="space-y-3">
+    <section className="space-y-3 lg:col-span-3">
       <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
         <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> today
       </h2>
@@ -133,7 +133,7 @@ export default async function Home() {
   );
 
   const positionsBlock = (
-    <section className="space-y-3">
+    <section className="space-y-3 lg:col-span-2">
       <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
         <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> positions
       </h2>
@@ -164,7 +164,7 @@ export default async function Home() {
   );
 
   const activityBlock = (
-    <section className="space-y-3">
+    <section className="space-y-3 lg:col-span-3">
       <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
         <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> activity
       </h2>
@@ -175,7 +175,7 @@ export default async function Home() {
   return (
     <LiveDataProvider initial={initial}>
       <div className="space-y-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12 sm:gap-y-16 lg:gap-x-24 lg:gap-y-24">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-x-8 gap-y-12 sm:gap-y-16 lg:gap-x-16 lg:gap-y-24">
           {heroBlock}
           {todayBlock}
           {performanceBlock}
