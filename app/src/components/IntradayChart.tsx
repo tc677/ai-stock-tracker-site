@@ -5,6 +5,7 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  Label,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -104,7 +105,7 @@ export function IntradayChart({
       )}
       <div className={`h-full ${revealed ? "intraday-reveal" : "intraday-hidden"}`}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+          <AreaChart data={data} margin={{ top: 10, right: 16, left: 8, bottom: 24 }}>
             <defs>
               <linearGradient id="intradayFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={stroke} stopOpacity={0.35} />
@@ -124,24 +125,47 @@ export function IntradayChart({
               domain={[openMs, closeMs]}
               ticks={ticks}
               tickFormatter={(t) =>
-                new Date(t as number).toLocaleTimeString("en-US", {
-                  hour: "numeric",
-                  timeZone: "America/New_York",
-                })
+                new Date(t as number)
+                  .toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    timeZone: "America/New_York",
+                  })
+                  .replace(" ", "")
+                  .toLowerCase()
               }
               stroke="currentColor"
               className="text-zinc-500"
               tick={{ fontSize: 11 }}
               allowDataOverflow={false}
-            />
+            >
+              <Label
+                value="time (ET)"
+                position="insideBottom"
+                offset={-16}
+                fill="currentColor"
+                className="text-zinc-500"
+                fontSize={11}
+              />
+            </XAxis>
             <YAxis
               tickFormatter={(v) => `${(v as number).toFixed(2)}%`}
               stroke="currentColor"
               className="text-zinc-500"
               tick={{ fontSize: 11 }}
-              width={56}
+              width={64}
               domain={yDomain}
-            />
+            >
+              <Label
+                value="% from prior close"
+                angle={-90}
+                position="insideLeft"
+                offset={16}
+                style={{ textAnchor: "middle" }}
+                fill="currentColor"
+                className="text-zinc-500"
+                fontSize={11}
+              />
+            </YAxis>
             <ReferenceLine
               y={0}
               stroke="currentColor"
