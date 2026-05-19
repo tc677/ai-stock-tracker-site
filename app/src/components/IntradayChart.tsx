@@ -67,16 +67,10 @@ export function IntradayChart({
 
   const { openMs, closeMs } = useMemo(() => getMarketBoundsMs(), []);
 
-  if (points.length < 2) {
-    return (
-      <div className="h-80 sm:h-[28rem] flex items-center justify-center rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-500 text-sm">
-        Waiting for today&rsquo;s first intraday points.
-      </div>
-    );
-  }
-
   const baseline =
-    priorClose != null && priorClose > 0 ? priorClose : points[0].value;
+    priorClose != null && priorClose > 0
+      ? priorClose
+      : points[0]?.value ?? 1;
 
   const data = points.map((p) => ({
     t: new Date(p.t).getTime(),
@@ -84,9 +78,14 @@ export function IntradayChart({
     value: p.value,
   }));
 
-  const last = data[data.length - 1].pct;
+  // Neutral stroke when there's nothing to color by sign yet.
+  const last = data.length > 0 ? data[data.length - 1].pct : 0;
   const isUp = last >= 0;
-  const stroke = isUp ? "#3fb950" : "#f85149"; // GitHub-style green/red
+  const stroke =
+    data.length > 0 ? (isUp ? "#3fb950" : "#f85149") : "#71717a"; // zinc-500 fallback
+  // Empty-state y-axis needs an explicit domain or Recharts collapses it.
+  const yDomain: [number | string, number | string] =
+    data.length > 0 ? ["dataMin", "dataMax"] : [-0.5, 0.5];
 
   // Hourly ticks 10, 11, ..., 16 ET. 9:30 sits at the left edge so we
   // skip an explicit tick there - the axis line itself reads as open.
@@ -97,7 +96,12 @@ export function IntradayChart({
   }
 
   return (
-    <div className="h-80 sm:h-[28rem]">
+    <div className="h-80 sm:h-[28rem] relative">
+      {data.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-zinc-500 text-sm z-10">
+          Waiting for today&rsquo;s first intraday points.
+        </div>
+      )}
       <div className={`h-full ${revealed ? "intraday-reveal" : "intraday-hidden"}`}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
@@ -136,7 +140,7 @@ export function IntradayChart({
               className="text-zinc-500"
               tick={{ fontSize: 11 }}
               width={56}
-              domain={["dataMin", "dataMax"]}
+              domain={yDomain}
             />
             <ReferenceLine
               y={0}
@@ -168,16 +172,18 @@ export function IntradayChart({
               labelStyle={{ color: "rgb(212 212 216)" }}
               itemStyle={{ color: "rgb(244 244 245)" }}
             />
-            <Area
-              type="monotone"
-              dataKey="pct"
-              stroke={stroke}
-              strokeWidth={2}
-              fill="url(#intradayFill)"
-              fillOpacity={1}
-              isAnimationActive={false}
-              activeDot={{ r: 4, fill: stroke }}
-            />
+            {data.length >= 2 && (
+              <Area
+                type="monotone"
+                dataKey="pct"
+                stroke={stroke}
+                strokeWidth={2}
+                fill="url(#intradayFill)"
+                fillOpacity={1}
+                isAnimationActive={false}
+                activeDot={{ r: 4, fill: stroke }}
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>
