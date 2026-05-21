@@ -40,12 +40,19 @@ export function HeroNumbers({
     ? todayFinalColor
     : "text-zinc-400 dark:text-zinc-500";
 
-  const showTodayStrip =
+  const marketOpen = marketClock?.isOpen ?? true;
+  // A real move happened today (guards against the dead pre-market
+  // "Today +$0.00" line, where portfolio_value still equals the prior
+  // close because the puller hasn't run yet).
+  const hasTodayMove =
     todayDollar != null &&
     todayPct != null &&
-    (marketClock?.isOpen ?? true);
-  const showClosedStrip =
-    marketClock != null && !marketClock.isOpen;
+    (todayDollar !== 0 || todayPct !== 0);
+  // Show the day's change while the market is open, and keep it visible
+  // after the close so the day's final result doesn't vanish.
+  const showTodayStrip =
+    todayDollar != null && todayPct != null && (marketOpen || hasTodayMove);
+  const showClosedStrip = marketClock != null && !marketClock.isOpen;
 
   return (
     <>
@@ -93,7 +100,7 @@ export function HeroNumbers({
           />
         </div>
       )}
-      {!showTodayStrip && showClosedStrip && (
+      {showClosedStrip && (
         <MarketClosedStrip nextOpen={marketClock?.nextOpen ?? null} />
       )}
       <div className="mt-4">
