@@ -4,7 +4,7 @@ Site to track how my AI Trading bot is doing
 
 Live at [canmyaitrade.com](https://canmyaitrade.com)
 
-It tracks the portfolio's positions, recent trades, and how it's fares
+It tracks the portfolio's positions, recent trades, and how it fares
 against other ETFs. Data refreshes every minute during market hours.
 
 ## Inside
