@@ -87,12 +87,12 @@ export default async function Home() {
   };
 
   const heroBlock = (
-    <section className="space-y-3 lg:col-span-2">
-      <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
+    <section className="lg:col-span-2">
+      <h2 className="font-mono text-xl font-semibold tracking-tight lowercase mb-4">
         <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> overview
       </h2>
       <div className="text-sm font-medium text-zinc-500 mb-1">
-        Portfolio value
+        Portfolio Value
       </div>
       <LiveOverview />
       <LivePositionSpotlight />

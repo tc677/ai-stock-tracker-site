@@ -75,7 +75,7 @@ export function ComparisonCards({
 
 // Shared grid template so the header labels line up with the cells.
 const GRID =
-  "grid grid-cols-[1.75rem_minmax(7rem,1.3fr)_4.5rem_4.5rem_4.5rem_5.5rem_5.5rem_7rem] items-center gap-3";
+  "grid grid-cols-[2.5rem_minmax(7rem,2fr)_1fr_1fr_1fr_1fr_1fr_minmax(6rem,1.2fr)] items-center gap-4";
 
 function HeaderRow() {
   return (

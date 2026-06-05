@@ -22,7 +22,7 @@ export function AIStatusLine({
   const tradePart = lastTrade ? `last trade ${lastTrade}` : "no trades yet";
 
   return (
-    <div className="mt-3 font-mono text-[11px] tracking-tight text-zinc-500">
+    <div className="mt-6 font-mono text-[11px] tracking-tight text-zinc-500">
       <span
         className="terminal-cursor"
         style={{ color: "var(--ai-accent)" }}

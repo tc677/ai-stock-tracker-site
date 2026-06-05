@@ -18,7 +18,7 @@ export function LiveTradeStats() {
   const tradeWord = s.closedTrades === 1 ? "closed trade" : "closed trades";
 
   return (
-    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums text-zinc-500">
+    <div className="mt-6 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums text-zinc-500">
       <span className="whitespace-nowrap">
         {s.closedTrades} {tradeWord}
       </span>

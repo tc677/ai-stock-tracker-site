@@ -68,7 +68,7 @@ export function HeroNumbers({
           />
         )}
       </div>
-      <div className="mt-4">
+      <div className="mt-6">
         <div className="text-sm font-medium text-zinc-500">Cash</div>
         <AnimatedNumber
           value={cash}
@@ -78,7 +78,7 @@ export function HeroNumbers({
       </div>
       {showTodayStrip && (
         <div
-          className={`mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums transition-colors duration-1000 ${todayColor}`}
+          className={`mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums transition-colors duration-1000 ${todayColor}`}
         >
           <span className="text-zinc-500">Today</span>
           <AnimatedNumber

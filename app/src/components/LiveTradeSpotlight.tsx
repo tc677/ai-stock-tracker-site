@@ -16,6 +16,7 @@ export function LiveTradeSpotlight() {
       title="Closed trades by realized P/L"
       best={s.bestTrade}
       worst={s.worstTrade}
+      className="mt-2"
     />
   );
 }

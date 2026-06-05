@@ -7,16 +7,16 @@ export function BestWorst({
   title,
   best,
   worst,
+  className = "mt-6",
 }: {
   title: string;
   best: { symbol: string; pct: number };
   worst: { symbol: string; pct: number };
+  className?: string;
 }) {
   return (
-    <div className="mt-3">
-      <div className="text-[10px] uppercase tracking-wide font-semibold text-zinc-500 mb-1">
-        {title}
-      </div>
+    <div className={className}>
+      <div className="text-sm font-medium text-zinc-500 mb-1">{title}</div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <Cell label="Best" symbol={best.symbol} pct={best.pct} />
         <span className="text-zinc-300 dark:text-zinc-700">·</span>
