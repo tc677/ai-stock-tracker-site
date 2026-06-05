@@ -1,18 +1,17 @@
 # Stock Dashboard
 
-A little window into how my AI is doing in the market.
+Site to track how my AI Trading bot is doing
 
-Live at [canmyaitrade.com](https://canmyaitrade.com).
+Live at [canmyaitrade.com](https://canmyaitrade.com)
 
-It tracks the portfolio's positions, recent trades, and how it's stacking up
-against benchmarks like the S&P 500, the Nasdaq-100, or whatever else I feel
-like comparing against. Data refreshes every few minutes during market hours.
+It tracks the portfolio's positions, recent trades, and how it's fares
+against other ETFs. Data refreshes every minute during market hours.
 
 ## Inside
 
-- **`app/`** — the website
-- **`data/`** — pulls fresh data from Alpaca on a schedule
-- **`infra/`** — the cloud setup, as code
+- **`app/`** — site
+- **`data/`** — data refresh
+- **`infra/`** — infra
 
 ## How it flows
 
@@ -21,10 +20,6 @@ Visitors → CloudFront (CDN + WAF) → internal ALB → Fargate (web) → Postg
                                                                        ↑
                           EventBridge → Fargate (puller) → Alpaca ─────┘
 ```
-
-CloudFront caches the pages at the edge, so the origin barely breaks a sweat.
-The puller runs as a short-lived container every few minutes and refreshes
-the data behind the scenes.
 
 ## Stack
 
