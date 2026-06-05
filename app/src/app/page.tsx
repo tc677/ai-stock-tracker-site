@@ -96,8 +96,8 @@ export default async function Home() {
       </div>
       <LiveOverview />
       <LivePositionSpotlight />
-      <LiveTradeStats />
       <LiveTradeSpotlight />
+      <LiveTradeStats />
       <LiveAIStatusLine />
       <LiveMarketStatus />
     </section>
