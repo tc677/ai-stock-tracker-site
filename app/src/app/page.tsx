@@ -7,9 +7,11 @@ import {
 } from "@/components/LiveDataProvider";
 import { LiveIntradayChart } from "@/components/LiveIntradayChart";
 import { LiveLeaderboard } from "@/components/LiveLeaderboard";
+import { LiveMarketStatus } from "@/components/LiveMarketStatus";
 import { LiveOverview } from "@/components/LiveOverview";
 import { LivePositionSpotlight } from "@/components/LivePositionSpotlight";
 import { LivePositionsTreemap } from "@/components/LivePositionsTreemap";
+import { LiveTradeSpotlight } from "@/components/LiveTradeSpotlight";
 import { LiveTradeStats } from "@/components/LiveTradeStats";
 import {
   computeMaxDrawdown,
@@ -23,7 +25,6 @@ import {
   getSummary,
   getTradeStats,
 } from "@/lib/queries";
-import { fmtDate } from "@/lib/format";
 
 export const revalidate = 10;
 
@@ -96,7 +97,9 @@ export default async function Home() {
       <LiveOverview />
       <LivePositionSpotlight />
       <LiveTradeStats />
+      <LiveTradeSpotlight />
       <LiveAIStatusLine />
+      <LiveMarketStatus />
     </section>
   );
 
@@ -105,7 +108,6 @@ export default async function Home() {
       <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
         <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> leaderboard
       </h2>
-      <p className="text-sm text-zinc-500">Since {fmtDate(inceptionDate)}</p>
       <LiveLeaderboard />
     </section>
   );
@@ -115,7 +117,7 @@ export default async function Home() {
       <h2 className="font-mono text-xl font-semibold tracking-tight lowercase">
         <span className="text-zinc-400 dark:text-zinc-600">&gt;</span> performance
       </h2>
-      <p className="text-sm text-zinc-500">Since {fmtDate(inceptionDate)}</p>
+      <p className="text-sm text-zinc-500">Since account inception</p>
       <LiveChart />
     </section>
   );

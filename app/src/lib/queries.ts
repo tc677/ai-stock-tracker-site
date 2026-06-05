@@ -163,6 +163,8 @@ export async function getTradeStats(): Promise<TradeStats | null> {
   let closed = 0;
   let wins = 0;
   let holdMsTotal = 0;
+  let bestTrade: { symbol: string; pct: number } | null = null;
+  let worstTrade: { symbol: string; pct: number } | null = null;
 
   for (const r of rows) {
     const qty = Number(r.qty);
@@ -187,6 +189,13 @@ export async function getTradeStats(): Promise<TradeStats | null> {
       closed++;
       if (pl > 0) wins++;
       holdMsTotal += ts - lot.ts;
+      const pct = lot.price ? ((price - lot.price) / lot.price) * 100 : 0;
+      if (!bestTrade || pct > bestTrade.pct) {
+        bestTrade = { symbol: r.symbol, pct };
+      }
+      if (!worstTrade || pct < worstTrade.pct) {
+        worstTrade = { symbol: r.symbol, pct };
+      }
       lot.qty -= matched;
       remaining -= matched;
       if (lot.qty <= 1e-9) lots.shift();
@@ -200,6 +209,8 @@ export async function getTradeStats(): Promise<TradeStats | null> {
     closedTrades: closed,
     winRate: wins / closed,
     avgHoldDays: holdMsTotal / closed / 86_400_000,
+    bestTrade,
+    worstTrade,
   };
 }
 

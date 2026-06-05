@@ -8,9 +8,14 @@ import { fmtDateTime, fmtUSD } from "@/lib/format";
 // Live trade-blotter table. When a new row appears (id not seen
 // before), it slides down from above with a brief side-colored
 // highlight, then settles into the rest of the table.
+// Most recent N trades shown in the blotter. Older fills are still in
+// the DB; the panel just caps what it renders so it doesn't grow without
+// bound. The container scrolls vertically once rows exceed its height.
+const MAX_ROWS = 25;
+
 export function LiveActivity() {
   const { data } = useLiveData();
-  const activity = data.activity;
+  const activity = data.activity.slice(0, MAX_ROWS);
 
   const seenIds = useRef<Set<string>>(new Set(activity.map((a) => a.id)));
   const [highlighted, setHighlighted] = useState<Set<string>>(new Set());
@@ -40,9 +45,9 @@ export function LiveActivity() {
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-auto max-h-[28rem]">
       <table className="w-full text-sm">
-        <thead>
+        <thead className="sticky top-0 z-10 bg-white dark:bg-[#0a0a0a]">
           <tr className="text-left text-[10px] uppercase tracking-[0.12em] text-zinc-500 border-b border-zinc-200 dark:border-zinc-800">
             <th className="px-4 py-2 font-medium">When</th>
             <th className="px-4 py-2 font-medium">Symbol</th>

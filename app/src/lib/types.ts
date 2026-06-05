@@ -38,6 +38,10 @@ export type TradeStats = {
   closedTrades: number;
   winRate: number;
   avgHoldDays: number;
+  // Best/worst single closed trade by realized P/L percent. Null until
+  // at least one trade has closed.
+  bestTrade: { symbol: string; pct: number } | null;
+  worstTrade: { symbol: string; pct: number } | null;
 };
 
 export type MarketClock = {
