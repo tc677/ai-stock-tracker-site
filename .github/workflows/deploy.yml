@@ -29,10 +29,10 @@ jobs:
       web: ${{ steps.changes.outputs.web }}
       puller: ${{ steps.changes.outputs.puller }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { fetch-depth: 2 }
       - id: changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             web:
@@ -46,10 +46,10 @@ jobs:
     # ARM-native runner: no QEMU emulation, native speed, no random flakes.
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -83,10 +83,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && (inputs.target == 'puller' || inputs.target == 'both') || (github.event_name == 'push' && needs.detect.outputs.puller == 'true')
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
