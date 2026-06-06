@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { LayoutGroup, motion } from "framer-motion";
 import { fmtPct } from "@/lib/format";
 import type { PerformancePoint, PerformanceSeries } from "@/lib/types";
@@ -33,8 +34,8 @@ export function ComparisonCards({
         d1: pctOverDays(s, 1),
         d7: pctOverDays(s, 7),
         d14: pctOverDays(s, 14),
+        d30: pctOverDays(s, 30),
         roi: roiPct(s),
-        maxDd: maxDrawdownPct(s),
         spark: s.points.filter(
           (p) => new Date(p.t).getTime() >= lastMs - 14 * DAY_MS,
         ),
@@ -49,7 +50,7 @@ export function ComparisonCards({
   return (
     <div className="overflow-x-auto">
       <LayoutGroup>
-        <div className="flex flex-col min-w-[43rem]">
+        <div className="flex flex-col min-w-[44rem]">
           <HeaderRow />
           {rows.map((r, i) => (
             <Row
@@ -60,8 +61,8 @@ export function ComparisonCards({
               d1={r.d1}
               d7={r.d7}
               d14={r.d14}
+              d30={r.d30}
               roi={r.roi}
-              maxDd={r.maxDd}
               spark={r.spark}
               isPortfolio={r.isPortfolio}
               isLast={i === rows.length - 1}
@@ -87,8 +88,8 @@ function HeaderRow() {
       <div className="text-right">24H</div>
       <div className="text-right">7D</div>
       <div className="text-right">14D</div>
+      <div className="text-right">30D</div>
       <div className="text-right">ROI</div>
-      <div className="text-right">MaxDD</div>
       <div className="text-right">14D Graph</div>
     </div>
   );
@@ -98,24 +99,6 @@ function roiPct(s: PerformanceSeries): number {
   const first = Number(s.points[0]?.value ?? 0);
   const last = Number(s.points[s.points.length - 1]?.value ?? 0);
   return first ? ((last - first) / first) * 100 : 0;
-}
-
-// Worst peak-to-trough drop over the series, as a negative pct (0 if it
-// never declined). Mirrors computeMaxDrawdown() in queries.ts, inlined
-// here so this client component doesn't pull the server-only db module.
-function maxDrawdownPct(s: PerformanceSeries): number {
-  let peak = -Infinity;
-  let worst = 0;
-  for (const p of s.points) {
-    const v = Number(p.value);
-    if (!isFinite(v) || v <= 0) continue;
-    if (v > peak) peak = v;
-    if (peak > 0) {
-      const dd = (v - peak) / peak;
-      if (dd < worst) worst = dd;
-    }
-  }
-  return worst * 100;
 }
 
 // Trailing % change over `days` calendar days: latest value vs the most
@@ -146,8 +129,8 @@ function Row({
   d1,
   d7,
   d14,
+  d30,
   roi,
-  maxDd,
   spark,
   isPortfolio,
   isLast,
@@ -158,8 +141,8 @@ function Row({
   d1: number | null;
   d7: number | null;
   d14: number | null;
+  d30: number | null;
   roi: number;
-  maxDd: number;
   spark: PerformancePoint[];
   isPortfolio: boolean;
   isLast: boolean;
@@ -204,8 +187,8 @@ function Row({
       <PctCell value={d1} revealed={revealed} />
       <PctCell value={d7} revealed={revealed} />
       <PctCell value={d14} revealed={revealed} />
+      <PctCell value={d30} revealed={revealed} />
       <PctCell value={roi} revealed={revealed} bold />
-      <DrawdownCell value={maxDd} revealed={revealed} />
       <div className="flex justify-end">
         <Sparkline points={spark} color={sparkColor} revealed={revealed} />
       </div>
@@ -246,37 +229,9 @@ function PctCell({
   );
 }
 
-// Max drawdown is always <= 0. Rendered red with a down-marker when the
-// series declined, or a muted dash when it never did.
-function DrawdownCell({
-  value,
-  revealed,
-}: {
-  value: number;
-  revealed: boolean;
-}) {
-  if (value >= 0) {
-    return (
-      <div className="text-right font-mono text-sm tabular-nums text-zinc-400 dark:text-zinc-600">
-        —
-      </div>
-    );
-  }
-  const color = revealed
-    ? "text-rose-600 dark:text-rose-400"
-    : "text-zinc-400 dark:text-zinc-500";
-  return (
-    <div
-      className={`text-right font-mono text-sm tabular-nums whitespace-nowrap transition-colors duration-1000 ${color}`}
-    >
-      <span className="mr-0.5">▼</span>
-      {fmtPct(value)}
-    </div>
-  );
-}
-
 // Tiny inline sparkline. Renders the series as a polyline normalized to
-// its own min/max so even small absolute moves show shape. Fades in
+// its own min/max so even small absolute moves show shape, with a
+// gradient area fill underneath (matching the "Today" chart). Fades in
 // alongside the rest of the row on intro reveal.
 function Sparkline({
   points,
@@ -287,6 +242,9 @@ function Sparkline({
   color: string;
   revealed: boolean;
 }) {
+  // useId gives each sparkline's gradient a unique, stable id so
+  // url(#id) references don't collide across rows.
+  const gradId = useId();
   if (points.length < 2) {
     return <div className="h-6 w-24" />;
   }
@@ -298,13 +256,16 @@ function Sparkline({
   const h = 24;
   const pad = 1.5;
   const stepX = (w - pad * 2) / (points.length - 1);
-  const path = values
-    .map((v, i) => {
-      const x = pad + i * stepX;
-      const y = pad + (1 - (v - min) / range) * (h - pad * 2);
-      return `${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
-    })
+  const coords = values.map((v, i) => ({
+    x: pad + i * stepX,
+    y: pad + (1 - (v - min) / range) * (h - pad * 2),
+  }));
+  const linePath = coords
+    .map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(2)} ${c.y.toFixed(2)}`)
     .join(" ");
+  const areaPath =
+    `${linePath} L ${coords[coords.length - 1].x.toFixed(2)} ${h - pad} ` +
+    `L ${coords[0].x.toFixed(2)} ${h - pad} Z`;
 
   return (
     <svg
@@ -314,8 +275,15 @@ function Sparkline({
       className={`transition-opacity duration-1000 ${revealed ? "opacity-100" : "opacity-0"}`}
       aria-hidden
     >
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill={`url(#${gradId})`} stroke="none" />
       <path
-        d={path}
+        d={linePath}
         fill="none"
         stroke={color}
         strokeWidth={1.5}

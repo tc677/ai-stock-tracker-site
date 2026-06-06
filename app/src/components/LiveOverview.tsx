@@ -35,6 +35,25 @@ export function LiveOverview() {
       ? ((portfolioValue - baselineSince) / baselineSince) * 100
       : null;
 
+  // High- and low-water marks over the portfolio's daily series, with
+  // the live value folded in as the latest point so a fresh intraday
+  // high/low registers immediately. Pct is measured from inception.
+  const equitySeries = [
+    ...(portfolioSince?.points.map((p) => Number(p.value)) ?? []),
+    portfolioValue,
+  ].filter((v) => isFinite(v) && v > 0);
+
+  let peakValue: number | null = null;
+  let peakPct: number | null = null;
+  let lowValue: number | null = null;
+  let lowPct: number | null = null;
+  if (equitySeries.length && baselineSince) {
+    peakValue = Math.max(...equitySeries);
+    peakPct = ((peakValue - baselineSince) / baselineSince) * 100;
+    lowValue = Math.min(...equitySeries);
+    lowPct = ((lowValue - baselineSince) / baselineSince) * 100;
+  }
+
   return (
     <>
       <HeroNumbers
@@ -43,6 +62,10 @@ export function LiveOverview() {
         sincePct={sincePct}
         todayDollar={todayDollar}
         todayPct={todayPct}
+        peakValue={peakValue}
+        peakPct={peakPct}
+        lowValue={lowValue}
+        lowPct={lowPct}
         marketClock={data.marketClock}
       />
       {target &&

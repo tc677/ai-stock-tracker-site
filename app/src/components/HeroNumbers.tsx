@@ -11,6 +11,10 @@ export function HeroNumbers({
   sincePct,
   todayDollar,
   todayPct,
+  peakValue,
+  peakPct,
+  lowValue,
+  lowPct,
   marketClock,
 }: {
   portfolioValue: number;
@@ -18,6 +22,10 @@ export function HeroNumbers({
   sincePct: number | null;
   todayDollar: number | null;
   todayPct: number | null;
+  peakValue: number | null;
+  peakPct: number | null;
+  lowValue: number | null;
+  lowPct: number | null;
   marketClock: MarketClock | null;
 }) {
   const { phase } = useIntro();
@@ -93,6 +101,36 @@ export function HeroNumbers({
           className="font-mono text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-50"
         />
       </div>
+      {peakValue != null && peakPct != null && peakPct > 0 && (
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums text-emerald-600 dark:text-emerald-400">
+          <span className="text-zinc-500">High-water mark</span>
+          <AnimatedNumber
+            value={peakValue}
+            format={fmtUSD}
+            className="font-semibold whitespace-nowrap"
+          />
+          <AnimatedNumber
+            value={peakPct}
+            format={(n) => `(+${fmtPct(n)})`}
+            className="whitespace-nowrap"
+          />
+        </div>
+      )}
+      {lowValue != null && lowPct != null && lowPct < 0 && (
+        <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums text-rose-600 dark:text-rose-400">
+          <span className="text-zinc-500">Low-water mark</span>
+          <AnimatedNumber
+            value={lowValue}
+            format={fmtUSD}
+            className="font-semibold whitespace-nowrap"
+          />
+          <AnimatedNumber
+            value={lowPct}
+            format={(n) => `(−${fmtPct(Math.abs(n))})`}
+            className="whitespace-nowrap"
+          />
+        </div>
+      )}
     </>
   );
 }
