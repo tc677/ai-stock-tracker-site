@@ -102,12 +102,6 @@ export function IntradayChart({
 
   return (
     <div className="h-96 sm:h-[34rem] relative">
-      {marketClosed && (
-        <div className="absolute right-1 top-0 z-10 flex items-center gap-1.5 font-mono text-[11px] tracking-tight text-rose-600 dark:text-rose-400">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-rose-500 dark:bg-rose-400" />
-          <span>Market closed</span>
-        </div>
-      )}
       {data.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-zinc-500 text-sm z-10">
           {marketClosed
