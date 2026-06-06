@@ -80,7 +80,7 @@ export function HeroNumbers({
         <div
           className={`mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums transition-colors duration-1000 ${todayColor}`}
         >
-          <span className="text-zinc-500">Today</span>
+          <span className="font-sans text-zinc-500">Today</span>
           <AnimatedNumber
             value={todayDollar!}
             format={(n) => `${n >= 0 ? "+" : "−"}${fmtUSD(Math.abs(n))}`}
@@ -103,7 +103,7 @@ export function HeroNumbers({
       </div>
       {peakValue != null && peakPct != null && peakPct > 0 && (
         <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums text-emerald-600 dark:text-emerald-400">
-          <span className="text-zinc-500">High-water mark</span>
+          <span className="font-sans text-zinc-500">High-water mark</span>
           <AnimatedNumber
             value={peakValue}
             format={fmtUSD}
@@ -118,7 +118,7 @@ export function HeroNumbers({
       )}
       {lowValue != null && lowPct != null && lowPct < 0 && (
         <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums text-rose-600 dark:text-rose-400">
-          <span className="text-zinc-500">Low-water mark</span>
+          <span className="font-sans text-zinc-500">Low-water mark</span>
           <AnimatedNumber
             value={lowValue}
             format={fmtUSD}
