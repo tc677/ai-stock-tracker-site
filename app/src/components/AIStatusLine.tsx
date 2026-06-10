@@ -6,11 +6,9 @@ import type { Activity, Position } from "@/lib/types";
 export function AIStatusLine({
   positions,
   activity,
-  model = "claude-opus-4-7",
 }: {
   positions: Position[];
   activity: Activity[];
-  model?: string;
 }) {
   const holdingPart =
     positions.length === 0
@@ -22,18 +20,10 @@ export function AIStatusLine({
   const tradePart = lastTrade ? `last trade ${lastTrade}` : "no trades yet";
 
   return (
-    <div className="mt-2 font-mono text-[11px] tracking-tight text-zinc-500">
-      <span
-        className="terminal-cursor"
-        style={{ color: "var(--ai-accent)" }}
-      >
-        ▍
-      </span>{" "}
-      <span>{holdingPart}</span>
-      <span className="px-1.5 text-zinc-400 dark:text-zinc-600">·</span>
-      <span>{tradePart}</span>
-      <span className="px-1.5 text-zinc-400 dark:text-zinc-600">·</span>
-      <span>model: {model}</span>
+    <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm font-mono tabular-nums text-zinc-500">
+      <span className="whitespace-nowrap">{holdingPart}</span>
+      <span className="text-zinc-400 dark:text-zinc-600">·</span>
+      <span className="whitespace-nowrap">{tradePart}</span>
     </div>
   );
 }
